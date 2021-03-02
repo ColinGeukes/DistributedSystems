@@ -3,4 +3,4 @@
 
 # Scala build files
 .bsp
-#target
+target
