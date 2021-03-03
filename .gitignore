@@ -1,1 +1,22 @@
-.idea/
+# IDE Files
+*.log
+*.iml
+*.ipr
+*.iws
+.idea
+
+# Scala build files
+.bsp
+target
+
+#general
+*.class
+/.ivy2/
+/.sbt/
+*.bash_history
+
+# other
+.history
+.scala_dependencies
+.cache
+.cache-main
