@@ -1,21 +1,17 @@
 package distributeds.systems
 
-import scorex.crypto.authds.LeafData
-import scorex.crypto.authds.merkle.{Leaf, MerkleTree}
-import scorex.crypto.hash.Keccak256
+import distributeds.systems.ADS.MerkleTree
 
 object HelloWorld extends App {
-  implicit val hf = Keccak256
+  val key = 1
+  val data = new Array[Byte](0.toByte)
+  val tree = new MerkleTree[Int, Array[Byte]](3)
 
-  println("Hello, World!")
-  val d = (0 until 10).map(_ => LeafData @@ scorex.utils.Random.randomBytes(32))
-  val leafs = d.map(data => Leaf(data))
-  val tree = MerkleTree(d)
-  leafs.foreach { l =>
-    val proof = tree.proofByElement(l).get
-    println(s"${proof.leafData}==${l.data}")
-    println(proof.leafData == l.data)
-    println(s"rootHash: ${tree.rootHash}")
-    println(proof.valid(tree.rootHash))
+  println(tree.maxKey)
+  var i = 0
+  for(i <- 1 to 10 ){
+    tree.insert(i,data)
   }
+
+  println(tree.prettyStringWithValues)
 }
