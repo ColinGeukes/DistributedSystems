@@ -2,9 +2,9 @@ package sgrub.contracts
 
 
 import com.google.common.primitives.{Bytes, Ints, Longs}
-import scorex.crypto.authds.{ADKey, ADValue}
-import scorex.crypto.authds.avltree.batch.{BatchAVLProver, InsertOrUpdate}
-import scorex.crypto.hash.{CryptographicHash, Digest}
+import scorex.crypto.authds.{ADDigest, ADKey, ADValue, SerializedAdProof}
+import scorex.crypto.authds.avltree.batch._
+import scorex.crypto.hash.{Blake2b256, CryptographicHash, Digest, Digest32}
 import sgrub.contracts.DataTypes.StateKey
 
 import scala.util.{Failure, Success, Try}
@@ -14,12 +14,13 @@ import scala.util.{Failure, Success, Try}
 // To prepare the call, DO locally batches the data updates
 // ... and includes them in a single gPuts call
 // ... to be sent by the end of the epoch.
-class DataOwner {
-  val prover = new BatchAVLProver(4, valueLengthOpt = Some(8))
-  val initialDigest = prover.digest
+class DataOwner(
+  storageProvider: StorageProvider
+) {
+  val keyLength = 8
+  private var latestDigest: ADDigest = storageProvider.initialDigest
 
-
-  def gPuts(kvs: Map[Int, Long]): Boolean = {
+  def gPuts(kvs: Map[Long, Array[Byte]]): Boolean = {
     // Internally, the gPuts...
     // First
     // > notifies the control plane on DO of the latest data updates
@@ -27,13 +28,26 @@ class DataOwner {
     // | for each data update:
     // > DO and SP jointly run the ADS protocol to securely update matching KV records
 
+    val (receivedDigest, receivedProof) = storageProvider.gPuts(kvs)
+    val ops = kvs.map(kv => InsertOrUpdate(ADKey @@ Longs.toByteArray(kv._1), ADValue @@ kv._2))
+    val verifier = new BatchAVLVerifier[Digest32, Blake2b256.type](
+      latestDigest,
+      receivedProof,
+      keyLength = keyLength,
+      valueLengthOpt = None,
+      maxNumOperations = Some(ops.size),
+      maxDeletes = Some(0)
+    )
 
-    val ops = kvs.map(kv => InsertOrUpdate(ADKey @@ Ints.toByteArray(kv._1), ADValue @@ Longs.toByteArray(kv._2)))
-    if (ops.map(prover.performOneOperation).exists(result => result.isFailure))
-      return false
+    ops.foreach(verifier.performOneOperation)
 
-    val proof = prover.generateProof()
-    val digest = prover.digest
+    verifier.digest match {
+      case Some(digest) if digest.sameElements(receivedDigest) => {
+        latestDigest = receivedDigest
+        true
+      }
+      case _ => false
+    }
 
     // | If:
     // | All KV records in this batch are in non-replicated state (NR)
@@ -47,7 +61,5 @@ class DataOwner {
     // | If:
     // | There is any state transition, either from R to NR or from NR to R
     // > Such transitions are included in the update call
-
-    true
   }
 }
