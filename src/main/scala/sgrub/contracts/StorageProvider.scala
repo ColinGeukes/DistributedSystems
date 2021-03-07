@@ -20,9 +20,9 @@ trait StorageProvider {
 
   /// NOTE: This should actually be calling with/returning a proof and digest via separate callbacks. This is just for initial tests.
   /**
-   * Queries the key-value store and calls [[callback]] with its value if it exists
+   * Queries the key-value store and calls [[callback]] with a proof if it exists
    * @param key The key with which to query the key-value store
    * @param callback An implicit function to call with the value associated with the key if it exists
    */
-  def request(key: Long, callback: (Long, Array[Byte]) => Unit): Unit
+  def request(key: Long, callback: SerializedAdProof => Unit): Unit
 }

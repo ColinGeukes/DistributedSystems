@@ -1,14 +1,20 @@
 package sgrub.contracts
 
+import scorex.crypto.authds.ADDigest
 import sgrub.inmemory.InMemoryStorageProvider
 
 /**
  * Represents the Data Owner producing a stream of data updates
  */
 trait DataOwner {
-
-  def keyLength: Int = 8
   def storageProvider: StorageProvider
+  def latestDigest: ADDigest
+
+  /**
+   * Registers a data user to update with the latest digests and replication changes
+   * @param user The DU to update
+   */
+  def register(user: DataUser): Unit
 
   /**
    * Runs the ADS protocol with [[storageProvider]]

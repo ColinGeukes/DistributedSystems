@@ -1,14 +1,12 @@
 package sgrub
 
-import java.nio.charset.StandardCharsets
-
-import sgrub.inmemory.{InMemoryDataOwner, InMemoryStorageProvider, MaliciousStorageProvider}
+import sgrub.inmemory.{InMemoryDataOwner, InMemoryDataUser, InMemoryStorageProvider}
 
 object main extends App {
   val StorageProvider = new InMemoryStorageProvider
-  val MalSP = new MaliciousStorageProvider
+  val DU1 = new InMemoryDataUser(StorageProvider)
   val DO1 = new InMemoryDataOwner(StorageProvider)
-  val DO2 = new InMemoryDataOwner(MalSP)
+  DO1.register(DU1)
 
   val someNewData = Map[Long, Array[Byte]](
     1L -> "Some Arbitrary Data".getBytes(),
@@ -17,23 +15,28 @@ object main extends App {
     4L -> "Hello".getBytes(),
   )
 
-  val kvPrinter: (Long, Array[Byte]) => Unit = (key, value) => {
+  val someNewerData = Map[Long, Array[Byte]](
+    4L -> "Updated Hello ".getBytes(),
+    5L -> "Added Hello".getBytes(),
+  )
+
+  val kvPrint: (Long, Array[Byte]) => Unit = (key, value) => {
     println(s"Key: $key, Value: ${new String(value)}")
   }
 
   println("Initial input:")
-  someNewData.foreach(x => kvPrinter(x._1, x._2))
-
-
+  someNewData.foreach(x => kvPrint(x._1, x._2))
 
   println(s"DO1 verification result: ${DO1.gPuts(someNewData)}")
-  println("DO1 storage provider contents:")
+  println("DU1 gGet results:")
   someNewData.foreach(kv => {
-    StorageProvider.request(kv._1, kvPrinter)
+    DU1.gGet(kv._1, kvPrint)
   })
-  println(s"DO2 verification result: ${DO2.gPuts(someNewData)}")
-  println("DO2 storage provider contents:")
-  someNewData.foreach(kv => {
-    MalSP.request(kv._1, kvPrinter)
+  println("Adding new data...")
+  someNewerData.foreach(x => kvPrint(x._1, x._2))
+  println(s"DO1 verification result: ${DO1.gPuts(someNewerData)}")
+  println("DU1 gGet results:")
+  someNewerData.foreach(kv => {
+    DU1.gGet(kv._1, kvPrint)
   })
 }

@@ -5,8 +5,10 @@ import scorex.crypto.authds.avltree.batch._
 import scorex.crypto.authds.{ADDigest, ADKey, ADValue, SerializedAdProof}
 import sgrub.contracts.{DigestType, HashFunction, KeyLength, StorageProvider}
 
+import scala.util.Success
+
 /**
- * Represents the off-chain data storage, operates in-memory
+ * Represents the off-chain data storage, stores data in-memory
  */
 class InMemoryStorageProvider extends StorageProvider {
   private val prover = new BatchAVLProver[DigestType, HashFunction](keyLength = KeyLength, valueLengthOpt = None)
@@ -18,9 +20,12 @@ class InMemoryStorageProvider extends StorageProvider {
     (prover.digest, prover.generateProof())
   }
 
-  override def request(key: Long, callback: (Long, Array[Byte]) => Unit): Unit = {
-    prover.unauthenticatedLookup(ADKey @@ Longs.toByteArray(key)) match {
-      case Some(result) => callback(key, result)
+  override def request(key: Long, callback: SerializedAdProof => Unit): Unit = {
+    prover.performOneOperation(Lookup(ADKey @@ Longs.toByteArray(key))) match {
+      case Success(some) => some match {
+        case Some(result) => callback(prover.generateProof())
+        case _ => //..
+      }
       case _ => // Request it
     }
   }

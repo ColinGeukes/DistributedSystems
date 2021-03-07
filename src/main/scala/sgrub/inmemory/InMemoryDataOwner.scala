@@ -3,18 +3,26 @@ package sgrub.inmemory
 import com.google.common.primitives.Longs
 import scorex.crypto.authds.avltree.batch._
 import scorex.crypto.authds.{ADDigest, ADKey, ADValue}
-import sgrub.contracts.{DataOwner, DigestType, HashFunction, StorageProvider}
+import sgrub.contracts.{DataOwner, DataUser, DigestType, HashFunction, KeyLength, StorageProvider}
+
+import scala.collection.mutable
 
 /**
- * Represents the Data Owner producing a stream of data updates, operates in-memory
+ * Represents the Data Owner producing a stream of data updates, stores data in-memory
  * @param sp The off-chain storage provider, [[storageProvider]]
  */
 class InMemoryDataOwner(
   sp: StorageProvider
 ) extends DataOwner {
-  private var latestDigest: ADDigest = storageProvider.initialDigest
+  private var _latestDigest: ADDigest = storageProvider.initialDigest
+  private val _users = mutable.Buffer.empty[DataUser]
+  override def latestDigest: ADDigest = _latestDigest
 
   override def storageProvider: StorageProvider = sp
+
+  def register(user: DataUser): Unit = {
+    _users += user
+  }
 
   override def gPuts(kvs: Map[Long, Array[Byte]]): Boolean = {
     // Internally, the gPuts...
@@ -27,9 +35,9 @@ class InMemoryDataOwner(
     val (receivedDigest, receivedProof) = storageProvider.gPuts(kvs)
     val ops = kvs.map(kv => InsertOrUpdate(ADKey @@ Longs.toByteArray(kv._1), ADValue @@ kv._2))
     val verifier = new BatchAVLVerifier[DigestType, HashFunction](
-      latestDigest,
+      _latestDigest,
       receivedProof,
-      keyLength = keyLength,
+      keyLength = KeyLength,
       valueLengthOpt = None,
       maxNumOperations = Some(ops.size),
       maxDeletes = Some(0)
@@ -39,7 +47,9 @@ class InMemoryDataOwner(
 
     verifier.digest match {
       case Some(digest) if digest.sameElements(receivedDigest) => {
-        latestDigest = receivedDigest
+        _latestDigest = receivedDigest
+        // No replication logic yet
+        _users.foreach(u => u.update(Map.empty, latestDigest))
         true
       }
       case _ => false
