@@ -3,19 +3,26 @@ package sgrub.contracts
 import scalaj.http.{Http, HttpOptions, HttpResponse}
 import io.circe._, io.circe.generic.auto._, io.circe.parser._, io.circe.syntax._
 
+// first start geth with following cmd: (omit --rinkeby flag for running a node on the main net)
+//geth --http --http.api personal,eth,net,web3 --rinkeby
 class EthereumClient {
+
+  // API specs: https://eth.wiki/json-rpc/API
   val getVersion = """{"jsonrpc":"2.0","method":"web3_clientVersion","params":[],"id":1}"""
   println("client version: ")
   println(RPC(getVersion, verbose = false))
 
   val getNetId = """{"jsonrpc":"2.0","method":"net_version","params":[],"id":67}"""
+  println("ethereum net (1=main, 4=test) : ")
+  println(RPC(getNetId, verbose = false))
+
   val numAccounts = """{"jsonrpc":"2.0","method":"eth_accounts","params":[],"id":1}"""
   println("account(s): ")
   println(RPC(numAccounts))
 
   val accountBalance = """{"jsonrpc":"2.0","method":"eth_getBalance","params":["0xf086ac6f286e2ef46f47553362ebd796b0ac788f", "latest"],"id":1}"""
   println("balance for account: ")
-  println(RPC(accountBalance))
+  println(RPC(accountBalance, verbose = false))
 
   /**
    * Execute remote procedure call using JSON RPC api, see https://eth.wiki/json-rpc/API
