@@ -14,7 +14,7 @@ libraryDependencies ++= Seq(
 
 val web3jVersion = "4.8.4"
 
-// See https://docs.web3j.io/modules.html
+// See http://docs.web3j.io/latest/advanced/web3j_core_modules/
 libraryDependencies ++= Seq(
   "org.web3j"              %  "abi"                     % web3jVersion withSources(), // Application Binary Interface encoders
   "org.web3j"              %  "codegen"                 % web3jVersion withSources(), // Code generators
