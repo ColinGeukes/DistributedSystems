@@ -20,3 +20,7 @@ target
 .scala_dependencies
 .cache
 .cache-main
+
+# Solidity
+**/bin/
+**/generated/
