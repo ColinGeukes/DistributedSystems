@@ -1,6 +1,12 @@
 package sgrub
 
+import org.web3j.crypto.WalletUtils
+import org.web3j.protocol.Web3j
+import org.web3j.protocol.core.filters
+import org.web3j.protocol.http.HttpService
+import org.web3j.tx.gas.DefaultGasProvider
 import sgrub.inmemory.{InMemoryDataOwner, InMemoryDataUser, InMemoryStorageProvider}
+import sgrub.smartcontracts.generated.Greeter
 
 object main extends App {
   val StorageProvider = new InMemoryStorageProvider
