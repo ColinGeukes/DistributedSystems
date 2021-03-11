@@ -37,7 +37,7 @@ contract StorageProvider {
     }
 
     //get from storage or request from provider
-    function gGet(uint key) public returns(data memory) {
+    function gGet(uint key) public view returns(data memory) {
         //get from storage if exists
         if(datastore[key]._exists){
             return datastore[key];
@@ -49,14 +49,13 @@ contract StorageProvider {
     }
 
     // fetch off-chain data
-    function request(uint key) internal returns (data memory) {
+    function request(uint) internal pure returns (data memory) {
         //TODO: send request to off chain storage and return data + proof
         bytes memory v = "some_data";
         bytes[] memory h = new bytes[](1);
         h[0] = v;
         proof memory p = proof(h);
-        data memory d = data(v, true, p);
-        return d;
+        return data(v, true, p);
     }
 
 
