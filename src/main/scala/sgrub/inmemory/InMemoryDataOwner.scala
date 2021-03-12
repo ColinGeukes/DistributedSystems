@@ -3,7 +3,7 @@ package sgrub.inmemory
 import com.google.common.primitives.Longs
 import scorex.crypto.authds.avltree.batch._
 import scorex.crypto.authds.{ADDigest, ADKey, ADValue}
-import sgrub.contracts.{DataOwner, DataUser, DigestType, HashFunction, KeyLength, StorageProvider}
+import sgrub.contracts.{DataOwner, DataUser, DigestType, HashFunction, KeyLength, StorageProvider, hf}
 
 import scala.collection.mutable
 
@@ -41,7 +41,7 @@ class InMemoryDataOwner(
       valueLengthOpt = None,
       maxNumOperations = Some(ops.size),
       maxDeletes = Some(0)
-    )
+    )(hf)
 
     ops.foreach(verifier.performOneOperation)
 

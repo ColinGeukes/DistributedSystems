@@ -3,7 +3,8 @@ package sgrub.inmemory
 import com.google.common.primitives.Longs
 import scorex.crypto.authds.avltree.batch.{BatchAVLVerifier, Lookup}
 import scorex.crypto.authds.{ADDigest, ADKey, SerializedAdProof}
-import sgrub.contracts.{DataUser, DigestType, HashFunction, KeyLength, StorageProvider}
+import sgrub.contracts.{DataUser, DigestType, HashFunction, KeyLength, StorageProvider, hf}
+import sgrub.playground.MinimalVerifier
 
 import scala.collection.mutable
 import scala.util.{Failure, Success}
@@ -33,6 +34,7 @@ class InMemoryDataUser(
     replicate: Boolean,
     proof: SerializedAdProof,
     callback: (Long, Array[Byte]) => Unit): Unit = {
+
     val verifier = new BatchAVLVerifier[DigestType, HashFunction](
       latestDigest,
       proof,
@@ -40,7 +42,17 @@ class InMemoryDataUser(
       valueLengthOpt = None,
       maxNumOperations = Some(1),
       maxDeletes = Some(0)
-    )
+    )(hf)
+
+    println("MinimalVerifier gets...")
+    val minV = new MinimalVerifier(latestDigest.slice(0,32))
+    println(s"Valid? ${minV.manualVerify(Longs.toByteArray(key), proof, {
+      case Some(existResult) => {
+        println(s"Value: ${new String(existResult)}")
+      }
+      case _ => println(s"Fail. No value for key: $key")
+    })}")
+
     verifier.performOneOperation(Lookup(ADKey @@ Longs.toByteArray(key))) match {
       case Success(successResult) => successResult match {
         case Some(existResult) => {

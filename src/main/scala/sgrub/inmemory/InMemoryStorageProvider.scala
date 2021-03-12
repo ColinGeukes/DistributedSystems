@@ -3,7 +3,7 @@ package sgrub.inmemory
 import com.google.common.primitives.Longs
 import scorex.crypto.authds.avltree.batch._
 import scorex.crypto.authds.{ADDigest, ADKey, ADValue, SerializedAdProof}
-import sgrub.contracts.{DigestType, HashFunction, KeyLength, StorageProvider}
+import sgrub.contracts.{DigestType, HashFunction, KeyLength, StorageProvider, hf}
 
 import scala.util.Success
 
@@ -11,7 +11,7 @@ import scala.util.Success
  * Represents the off-chain data storage, stores data in-memory
  */
 class InMemoryStorageProvider extends StorageProvider {
-  private val prover = new BatchAVLProver[DigestType, HashFunction](keyLength = KeyLength, valueLengthOpt = None)
+  private val prover = new BatchAVLProver[DigestType, HashFunction](keyLength = KeyLength, valueLengthOpt = None)(hf)
   override val initialDigest: ADDigest = prover.digest
 
   override def gPuts(kvs: Map[Long, Array[Byte]]): (ADDigest, SerializedAdProof) = {
