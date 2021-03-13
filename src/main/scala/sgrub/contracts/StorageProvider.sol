@@ -1,12 +1,16 @@
 pragma experimental ABIEncoderV2;
 pragma solidity ^ 0.7.0;
 
+
+// client contract implements deliver callback function to receive requested values
+contract Client {
+    function deliver(uint, bytes memory) public {}
+}
+
 contract StorageProvider {
 
-    //array of merkleTree hashes to form the proof
-    struct proof {
-        bytes[] hashes;
-    }
+    // client to deliver requests to
+    Client c;
 
     /*data struct;
     value is a dynamic byte array;
@@ -16,7 +20,7 @@ contract StorageProvider {
     struct data {
         bytes _value;
         bool _exists;
-        proof _proof;
+        bytes _proof;
     }
 
     //on-chain storage
@@ -36,32 +40,27 @@ contract StorageProvider {
         _;
     }
 
-    //get from storage or request from provider
-    function gGet(uint key) public view returns(data memory) {
-        //get from storage if exists
+    // a request event with indexed key and address to filter logs
+    event request(uint indexed key, address indexed sender);
+
+    //callback deliver with value from storage if it exists, or emit request for off-chain data
+    function gGet(uint key) public {
+        //register the function caller to deliver values
+        c = Client(msg.sender);
+
+        //get from storage if exists and callback
         if(datastore[key]._exists){
-            return datastore[key];
+            c.deliver(key, datastore[key]._value);
         }
-        //otherwise request from off-chain storage
+        //otherwise emit event with requested key and address to deliver to
         else {
-            return request(key);
+            emit request(key, msg.sender);
         }
     }
-
-    // fetch off-chain data
-    function request(uint) internal pure returns (data memory) {
-        //TODO: send request to off chain storage and return data + proof
-        bytes memory v = "some_data";
-        bytes[] memory h = new bytes[](1);
-        h[0] = v;
-        proof memory p = proof(h);
-        return data(v, true, p);
-    }
-
 
     //SP can use this to update the data
-    function update(uint _key, bytes memory _value, bytes[] memory _proof) public onlyOwner {
-        data memory d = data(_value, true, proof(_proof));
+    function update(uint _key, bytes memory _value, bytes memory _proof) public onlyOwner {
+        data memory d = data(_value, true, _proof);
         datastore[_key] = d;
     }
 
