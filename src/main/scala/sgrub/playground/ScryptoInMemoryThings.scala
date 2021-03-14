@@ -4,6 +4,12 @@ import sgrub.inmemory.{InMemoryDataOwner, InMemoryDataUser, InMemoryStorageProvi
 
 object ScryptoInMemoryThings {
   def tryInMemoryGrub(): Unit = {
+    println(
+      "\n" +
+        "\n================================" +
+        "\nIN-MEMORY ADS TEST (Scrypto)" +
+        "\n================================")
+
     val StorageProvider = new InMemoryStorageProvider
     val DU1 = new InMemoryDataUser(StorageProvider)
     val DO1 = new InMemoryDataOwner(StorageProvider)
