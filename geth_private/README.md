@@ -4,7 +4,7 @@
 
 ```shell
 geth --datadir node01 init genesis.json
-geth --identity "node01" --datadir node01 --ipcdisable --port 30301 --http --http.api personal,eth,net,web3,miner --http.port 8101
+geth --identity "node01" --datadir node01 --ipcdisable --allow-insecure-unlock --port 30301 --http --http.api admin,personal,eth,net,web3,miner --http.port 8101
 ```
 
 Attach to the network and start mining:

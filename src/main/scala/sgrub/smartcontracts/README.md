@@ -24,7 +24,7 @@ Example Scala code:
 ```scala
 val web3 = Web3j.build(new HttpService());  // defaults to http://localhost:8545/
 val credentials = WalletUtils.loadCredentials("password", "/path/to/walletfile")
-val transactionManager = new RawTransactionManager(web3, credentials, 1234) // 1234 = chainId
+val transactionManager = new RawTransactionManager(web3, credentials, 1234) // 1234 = chainId (Our chainId is 15)
 val gasProvider = new StaticGasProvider(new BigInteger("<Gas price>"), new BigInteger("<Gas limit>"))
 
 // Deploy contract
