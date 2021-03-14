@@ -12,6 +12,9 @@ libraryDependencies ++= Seq(
   "org.scorexfoundation" %% "scrypto" % "2.1.10",
 )
 
+// Ensure compatibility with Java 11
+javacOptions ++= Seq("-source", "1.8", "-target", "1.8")
+
 val web3jVersion = "4.8.4"
 
 // See http://docs.web3j.io/latest/advanced/web3j_core_modules/
