@@ -44,15 +44,6 @@ class InMemoryDataUser(
       maxDeletes = Some(0)
     )(hf)
 
-    println("MinimalVerifier gets...")
-    val minV = new MinimalVerifier(latestDigest.slice(0,32))
-    println(s"Valid? ${minV.manualVerify(Longs.toByteArray(key), proof, {
-      case Some(existResult) => {
-        println(s"Value: ${new String(existResult)}")
-      }
-      case _ => println(s"Fail. No value for key: $key")
-    })}")
-
     verifier.performOneOperation(Lookup(ADKey @@ Longs.toByteArray(key))) match {
       case Success(successResult) => successResult match {
         case Some(existResult) => {

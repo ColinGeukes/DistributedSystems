@@ -8,15 +8,6 @@ import org.bouncycastle.crypto.digests.KeccakDigest
 class MinimalVerifier(latestDigest: Array[Byte]) {
   val keyLength = 8
   val digestSize = 32
-//  // Make sure this doesn't end up requiring SStore?
-//  private var directionsIndex = 0
-//  // Keeps track of where we are in the
-//  //  "directions" part of the proof
-//  private var lastRightStep = 0
-//  // Keeps track of the last time we took a right step
-//  // when going down the tree; needed for deletions
-//  private var replayIndex = 0 // Keeps track of where we are when replaying directions
-//  // a second time; needed for deletions
 
   // We'll have to figure out how to do this, too
   def hash(toHash: Array[Byte]): Array[Byte] = {
@@ -156,69 +147,4 @@ class MinimalVerifier(latestDigest: Array[Byte]) {
     false
   }
 
-  // Might not need the whole tree...
-//  def reconstructTree(proof: Array[Byte], callback: (BasicNode) => Unit): Boolean = {
-//    // Make sure this is Digest32
-//    if (latestDigest.length == 32) {
-//      val labelLength = 32
-//      // Convert Byte to Int
-//      val rootNodeHeight = latestDigest(32) & 0xFF
-//      val maxNodes = 2 * rootNodeHeight + 2
-//
-//      var numNodes = 0
-//      var s = List.empty[BasicNode] // Nodes and depths
-//      var i = 0
-//      var previousLeaf: Option[ProperLeaf] = None
-//      while (proof(i) != EndOfTreeInPackagedProof) {
-//        val n = proof(i)
-//        i += 1
-//        numNodes += 1
-//        // Proof too long
-//        if (numNodes <= maxNodes)
-//          return false
-//
-//        if (n == LabelInPackagedProof) {
-//          val label = proof.slice(i, i + labelLength)
-//          i += labelLength
-//          s = new ImpNode(label) +: s
-//        }
-//        else if (n == LeafInPackagedProof) {
-//          val key = if (previousLeaf.nonEmpty) {
-//            previousLeaf.get.nextLeafKey
-//          }
-//          else {
-//            val start = i
-//            i += keyLength
-//            proof.slice(start, i)
-//          }
-//          val nextLeafKey = proof.slice(i, i + keyLength)
-//          i += keyLength
-//          val valueLength = Ints.fromByteArray(proof.slice(i, i + 4))
-//          i +=4
-//          val value = proof.slice(i, i + valueLength)
-//          i += valueLength
-//          val leaf = new ImpLeaf(key, value, nextLeafKey)
-//          s = leaf +: s
-//
-//          previousLeaf = Some(leaf)
-//        }
-//        else {
-//          val right = s.head
-//          s = s.tail
-//          val left = s.head
-//          s = s.tail
-//          s = new ImpInternalNode(n, left, right) +: s
-//        }
-//      }
-//      if (s.size > 1) {
-//        val root = s.head
-//        if (latestDigest startsWith root.label) {
-//          directionsIndex = (i + 1) * 8
-//          callback(root)
-//          return true
-//        }
-//      }
-//    }
-//    false
-//  }
 }

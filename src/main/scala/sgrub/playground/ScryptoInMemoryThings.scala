@@ -1,5 +1,6 @@
 package sgrub.playground
 
+import com.google.common.primitives.Longs
 import sgrub.inmemory.{InMemoryDataOwner, InMemoryDataUser, InMemoryStorageProvider}
 
 object ScryptoInMemoryThings {
@@ -46,5 +47,20 @@ object ScryptoInMemoryThings {
     someNewerData.foreach(kv => {
       DU1.gGet(kv._1, kvPrint)
     })
+
+    println("MinimalVerifier gets...")
+    val minV = new MinimalVerifier(DO1.latestDigest.slice(0,32))
+    for (key <- 1L to 5L) {
+      println(s"Key: $key")
+      StorageProvider.request(key, proof => {
+        println(s"Valid? ${minV.manualVerify(Longs.toByteArray(key), proof, {
+          case Some(existResult) => {
+            println(s"Value: ${new String(existResult)}")
+          }
+          case _ => println(s"Fail. No value for key: $key")
+        })}")
+      })
+    }
+
   }
 }
