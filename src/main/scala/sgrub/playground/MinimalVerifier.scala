@@ -80,10 +80,12 @@ class MinimalVerifier(latestDigest: Array[Byte]) {
           s = label +: s
         }
         else {
+          // Grab the first two labels as left and right (Removing them from the list)
           val right = s.head
           s = s.tail
           val left = s.head
           s = s.tail
+          // Then make the new label the head of the list
           val label = prefixedHash(1: Byte, Array(n), left, right)
           s = label +: s
         }
