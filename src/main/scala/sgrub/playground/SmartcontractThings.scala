@@ -1,7 +1,12 @@
 package sgrub.playground
 
+import io.reactivex.subscribers.DisposableSubscriber
+import org.web3j.abi.{EventEncoder, TypeReference}
+import org.web3j.abi.datatypes.{Address, Event, Uint}
 import org.web3j.crypto.WalletUtils
 import org.web3j.protocol.Web3j
+import org.web3j.protocol.core.DefaultBlockParameterName
+import org.web3j.protocol.core.methods.request.EthFilter
 import org.web3j.protocol.http.HttpService
 import org.web3j.tx.RawTransactionManager
 import org.web3j.tx.gas.StaticGasProvider
@@ -9,6 +14,7 @@ import sgrub.smartcontracts.generated.Storage
 
 import java.math.BigInteger
 import java.security.InvalidParameterException
+import java.util
 import scala.io.StdIn
 import scala.util.{Failure, Success, Try}
 
@@ -76,6 +82,45 @@ class SmartcontractThings(gethPath: String) {
     } else {
       val inputAddress = StdIn.readLine("Please enter the storage contract address: ")
       tryCall(connect_to_storage(Some(inputAddress)))
+    }
+  }
+
+  def startListener():Unit = {
+    new EventListener().listen()
+  }
+
+  private class EventListener(){
+    // Definition of event: request(uint indexed key, address indexed sender);
+    val event = new Event(
+      "request",
+      util.Arrays.asList[TypeReference[_]](
+        new TypeReference[Uint](true) {},
+        new TypeReference[Address](true) {}));
+
+    //need get the encoding for the event of interest to filter from EVM log
+    val eventHash = EventEncoder.encode(event);
+
+    //filter on address, blocks, and event definition
+    val filter = new EthFilter(
+      DefaultBlockParameterName.EARLIEST, //search from block (maybe change to latest?)
+      DefaultBlockParameterName.LATEST, // to block
+      _address.toString // smart contract that emits event
+    ).addSingleTopic(eventHash); //filter on event definition
+
+    // subscriber logic for handling incoming event logs
+    val subscriber = new DisposableSubscriber[Any]() {
+      override def onNext(t: Any): Unit = println(t.toString)
+      override def onError(t: Throwable): Unit = t.printStackTrace()
+      override def onComplete(): Unit = println("stopped listening")
+    }
+
+    def listen(): Unit ={
+      println("listening")
+      web3.ethLogFlowable(filter).subscribeWith(subscriber);
+    }
+
+    def stopListening(): Unit={
+      subscriber.dispose()
     }
   }
 }
