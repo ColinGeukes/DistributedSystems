@@ -125,7 +125,7 @@ class SmartcontractThings(gethPath: String) {
     println("Deploy new contract? (y/n)")
     val deployInput = StdIn.readBoolean()
     if (deployInput) {
-      StdIn.readLine("Name of generated class: ") match {
+      StdIn.readLine("Name of generated class? (Storage/StorageProvider)\n") match {
         case "Storage" => tryCall(deploy("Storage").asInstanceOf[Try[Storage]])
         case "StorageProvider" => tryCall2(deploy("StorageProvider").asInstanceOf[Try[StorageProvider]])
       }
