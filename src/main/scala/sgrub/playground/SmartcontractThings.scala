@@ -8,9 +8,9 @@ import org.web3j.protocol.Web3j
 import org.web3j.protocol.core.DefaultBlockParameterName
 import org.web3j.protocol.core.methods.request.EthFilter
 import org.web3j.protocol.http.HttpService
-import org.web3j.tx.RawTransactionManager
+import org.web3j.tx.{Contract, RawTransactionManager}
 import org.web3j.tx.gas.StaticGasProvider
-import sgrub.smartcontracts.generated.Storage
+import sgrub.smartcontracts.generated.{Storage, StorageProvider}
 
 import java.math.BigInteger
 import java.security.InvalidParameterException
@@ -23,15 +23,22 @@ class SmartcontractThings(gethPath: String) {
   private val gasProvider = new StaticGasProvider(new BigInteger("1000000000"), new BigInteger("8000000"))
   private val credentials = WalletUtils.loadCredentials("password", s"$gethPath/node01/keystore/UTC--2021-03-14T10-55-22.116143363Z--f90b82d1f4466e7e83740cad7c29f4576334eeb4")
   private val transactionManager = new RawTransactionManager(web3, credentials, 15)
-  private var _storage: Option[Storage] = None
-  def storage: Option[Storage] = _storage
+  private var _storage: Option[Contract] = None
+
+  def storage: Option[Contract] = _storage
+
   private var _address: Option[String] = None
+
   def address: Option[String] = _address
 
-  def deploy_storage(): Try[Storage] = {
+  def deploy(s: String): Try[Any] = {
     println("Deploying contract...")
-    val tryContract = Try(Storage.deploy(
-      web3, transactionManager, gasProvider).send())
+    val tryContract = s match {
+      case "Storage" => Try(Storage.deploy(
+        web3, transactionManager, gasProvider).send())
+      case "StorageProvider" => Try(StorageProvider.deploy(
+        web3, transactionManager, gasProvider).send())
+    }
     if (tryContract.isSuccess) {
       val contract = tryContract.get
       println(s"Transaction receipt: ${contract.getTransactionReceipt}")
@@ -39,17 +46,23 @@ class SmartcontractThings(gethPath: String) {
       if (!contract.isValid) {
         return Failure(new InvalidParameterException("Contract was invalid"))
       }
+
       _storage = Some(contract)
       _address = Some(contract.getContractAddress)
     }
     tryContract
   }
 
-  def connect_to_storage(storageAddress: Option[String] = address): Try[Storage] = {
+  def connect_to_storage(storageAddress: Option[String] = address, s: String = "Storage"): Try[Contract] = {
     storage match {
       case Some(storageExists) => Success(storageExists)
       case _ => storageAddress match {
-        case Some(addressExists) => Try(Storage.load(addressExists, web3, transactionManager, gasProvider))
+        case Some(addressExists) => {
+          s match {
+            case "Storage" => Try(Storage.load(addressExists, web3, transactionManager, gasProvider))
+            case "StorageProvider" => Try(StorageProvider.load(addressExists, web3, transactionManager, gasProvider))
+          }
+        }
         case _ => Failure(new InvalidParameterException("Storage has not been deployed yet"))
       }
     }
@@ -69,6 +82,40 @@ class SmartcontractThings(gethPath: String) {
     }
   }
 
+  def tryCall2(tryStorage: Try[StorageProvider]): Unit = {
+    tryStorage match {
+      case Success(storage) => {
+        println("key to store?")
+        val toStore = BigInteger.valueOf(StdIn.readInt())
+        val bytes = "test".getBytes()
+        println(s"Storing test bytes at $toStore")
+        storage.update(toStore, bytes, bytes).send()
+        println("Stored")
+      }
+      case Failure(ex) => println(s"Failed with: $ex")
+    }
+  }
+
+  def tryCall3(tryStorage: Try[StorageProvider]): Unit = {
+    tryStorage match {
+      case Success(storage) => {
+        println("key to get?")
+        val toGet = BigInteger.valueOf(StdIn.readInt())
+        println(s"Getting bytes at $toGet")
+        storage.gGet(toGet).send()
+        println("Request sent")
+        val receipt = _storage.get.getTransactionReceipt.get()
+        println("Printing transaction event log: ")
+        storage.getRequestEvents(receipt).forEach(e => {
+          val key = e.key
+          val sender = e.sender
+          println(s"found request for $key from $sender")
+        })
+      }
+      case Failure(ex) => println(s"Failed with: $ex")
+    }
+  }
+
   def userInputThings(): Unit = {
     println(
       "\n" +
@@ -78,18 +125,21 @@ class SmartcontractThings(gethPath: String) {
     println("Deploy new contract? (y/n)")
     val deployInput = StdIn.readBoolean()
     if (deployInput) {
-      tryCall(deploy_storage())
+      StdIn.readLine("Name of generated class: ") match {
+        case "Storage" => tryCall(deploy("Storage").asInstanceOf[Try[Storage]])
+        case "StorageProvider" => tryCall2(deploy("StorageProvider").asInstanceOf[Try[StorageProvider]])
+      }
     } else {
       val inputAddress = StdIn.readLine("Please enter the storage contract address: ")
-      tryCall(connect_to_storage(Some(inputAddress)))
+      tryCall3(connect_to_storage(Some(inputAddress)).asInstanceOf[Try[StorageProvider]])
     }
   }
 
-  def startListener():Unit = {
+  def startListener(): Unit = {
     new EventListener().listen()
   }
 
-  private class EventListener(){
+  private class EventListener() {
     // Definition of event: request(uint indexed key, address indexed sender);
     val event = new Event(
       "request",
@@ -104,23 +154,26 @@ class SmartcontractThings(gethPath: String) {
     val filter = new EthFilter(
       DefaultBlockParameterName.EARLIEST, //search from block (maybe change to latest?)
       DefaultBlockParameterName.LATEST, // to block
-      _address.toString // smart contract that emits event
+      _address.get // smart contract that emits event
     ).addSingleTopic(eventHash); //filter on event definition
 
     // subscriber logic for handling incoming event logs
     val subscriber = new DisposableSubscriber[Any]() {
-      override def onNext(t: Any): Unit = println(t.toString)
+      override def onNext(t: Any): Unit = println("SUCCESS:  " + t.toString)
+
       override def onError(t: Throwable): Unit = t.printStackTrace()
+
       override def onComplete(): Unit = println("stopped listening")
     }
 
-    def listen(): Unit ={
+    def listen(): Unit = {
       println("listening")
       web3.ethLogFlowable(filter).subscribeWith(subscriber);
     }
 
-    def stopListening(): Unit={
+    def stopListening(): Unit = {
       subscriber.dispose()
     }
   }
+
 }

@@ -13,7 +13,10 @@ object SgrubStart {
     }
     val smartcontractThings = new SmartcontractThings(args(0))
     smartcontractThings.userInputThings()
+    smartcontractThings.startListener()
+    //Contract address: 0xf83ae7a717596b94e197fe6c413623a109afb558
+    smartcontractThings.userInputThings()
 
-    ScryptoInMemoryThings.tryInMemoryGrub()
+    //ScryptoInMemoryThings.tryInMemoryGrub()
   }
 }
