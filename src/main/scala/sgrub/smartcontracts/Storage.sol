@@ -39,7 +39,7 @@ contract Storage {
 		latestDigest = digest;
 	}
 
-	function verify(bytes8 key, bytes memory proof) public payable returns (VerifiedOutput memory) {
+	function verify(bytes8 key, bytes memory proof) public view returns (VerifiedOutput memory) {
 		// labelLength = 8
 		VerifiedOutput memory ret;
 		uint8 rootNodeHeight = toUint8(latestDigest, 31);
@@ -49,7 +49,7 @@ contract Storage {
 		bytes32[4] memory labels;
 		uint256 i = 0;
 		bool valueExists = false;
-		while (toInt8(proof, i) != 4) {
+		while (toInt8(proof, i) != 4 && i < proof.length) {
 			int8 n = toInt8(proof, i);
 			i += 1;
 			numNodes += 1;
@@ -60,11 +60,7 @@ contract Storage {
 			}
 
 			if (n == 3) { // Label
-				bytes32 label;
-				assembly {
-					label := mload(add(proof, i))
-				}
-				labels[labelsHead] = label;
+				labels[labelsHead] = toLabel(proof, i);
 				labelsHead += 1;
 				i += 32;
 			} else if (n == 2) { // Leaf
@@ -72,24 +68,15 @@ contract Storage {
 					ret.valid = false;
 					return ret;
 				}
-				bytes8 leafKey;
-				assembly {
-					leafKey := mload(add(proof, i))
-				}
+				bytes8 leafKey = toLeafKey(proof, i);
 				i += 8;
 				if (leafKey != key) {
 					ret.valid = false;
 					return ret;
 				}
-				bytes8 nextLeafKey;
-				assembly {
-					nextLeafKey := mload(add(proof, i))
-				}
+				bytes8 nextLeafKey = toLeafKey(proof, i);
 				i += 8;
-				uint32 valueLength;
-				assembly {
-					valueLength := mload(add(proof, i))
-				}
+				uint32 valueLength = toUint32(proof, i);
 				i += 4;
 				bytes memory value = new bytes(valueLength);
 				assembly {
@@ -120,6 +107,18 @@ contract Storage {
 		return ret;
 	}
 
+	function toLeafKey(bytes memory input, uint offset) private pure returns(bytes8 output) {
+		assembly {
+			output := mload(add(input, offset))
+		}
+	}
+
+	function toLabel(bytes memory input, uint offset) private pure returns(bytes32 output) {
+		assembly {
+			output := mload(add(input, offset))
+		}
+	}
+
 	function toInt8(bytes memory input, uint offset) private pure returns (int8 output) {
 		assembly {
 			output := mload(add(input, offset))
@@ -127,6 +126,12 @@ contract Storage {
 	}
 
 	function toUint8(bytes32 input, uint offset) private pure returns (uint8 output) {
+		assembly {
+			output := mload(add(input, offset))
+		}
+	}
+
+	function toUint32(bytes memory input, uint offset) private pure returns (uint32 output) {
 		assembly {
 			output := mload(add(input, offset))
 		}

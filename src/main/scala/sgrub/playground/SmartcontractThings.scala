@@ -1,10 +1,13 @@
 package sgrub.playground
 
+import com.google.common.primitives.Longs
 import org.web3j.crypto.WalletUtils
 import org.web3j.protocol.Web3j
 import org.web3j.protocol.http.HttpService
 import org.web3j.tx.RawTransactionManager
 import org.web3j.tx.gas.StaticGasProvider
+import sgrub.contracts.DataOwner
+import sgrub.inmemory.{InMemoryDataOwner, InMemoryStorageProvider}
 import sgrub.smartcontracts.generated.Storage
 
 import java.math.BigInteger
@@ -58,6 +61,29 @@ class SmartcontractThings(gethPath: String) {
         storage.store(toStore).send()
         println("Stored. Retrieving...")
         println(s"Retrieved: ${storage.retrieve().send()}")
+        println("Trying verification now...")
+        val SP = new InMemoryStorageProvider()
+        val DO = new InMemoryDataOwner(SP)
+        DO.gPuts(Map(
+          1L -> "Some Arbitrary Data".getBytes(),
+          2L -> "Some More Arbitrary Data".getBytes(),
+          3L -> "Hi".getBytes(),
+          4L -> "Hello".getBytes(),
+        ))
+        println("Updating digest...")
+        storage.updateDigest(DO.latestDigest.slice(0,32)).send()
+        println("Getting proof for key...")
+        SP.request(1L, proof => {
+          println("Calling verify...")
+          val result = storage.verify(Longs.toByteArray(1L), proof).send()
+          println(s"Result: $result")
+          if (result.valid) {
+            println(s"Valid! Value: ${new String(result.value)}")
+          } else {
+            println("Invalid")
+          }
+        })
+
       }
       case Failure(ex) => println(s"Failed with: $ex")
     }
