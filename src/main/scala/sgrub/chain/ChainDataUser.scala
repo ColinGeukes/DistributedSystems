@@ -25,37 +25,37 @@ class ChainDataUser(
     smSubscription = Some(sm.deliverEventFlowable(
       DefaultBlockParameterName.EARLIEST,
       DefaultBlockParameterName.LATEST)
-      .subscribe((event: StorageManager.DeliverEventResponse) => {
-        log.info(s"Got SM Deliver event! key: ${Longs.fromByteArray(event.key)}, value: ${new String(event.value)}")
-      }))
-//      .filter((event: StorageManager.DeliverEventResponse) =>
-//        Longs.fromByteArray(event.key) == key)
-//      .takeUntil(new Predicate[StorageManager.DeliverEventResponse] {
-//        override def test(t: StorageManager.DeliverEventResponse): Boolean = Longs.fromByteArray(t.key) == key
-//      })
 //      .subscribe((event: StorageManager.DeliverEventResponse) => {
-//        callback(key, event.value)
-//        spSubscription match {
-//          case Some(sub) => sub.dispose()
-//          case _ =>
-//        }
+//        log.info(s"Got SM Deliver event! key: ${Longs.fromByteArray(event.key)}, value: ${new String(event.value)}")
 //      }))
+      .filter((event: StorageManager.DeliverEventResponse) =>
+        Longs.fromByteArray(event.key) == key)
+      .takeUntil(new Predicate[StorageManager.DeliverEventResponse] {
+        override def test(t: StorageManager.DeliverEventResponse): Boolean = Longs.fromByteArray(t.key) == key
+      })
+      .subscribe((event: StorageManager.DeliverEventResponse) => {
+        callback(key, event.value)
+        spSubscription match {
+          case Some(sub) => sub.dispose()
+          case _ =>
+        }
+      }))
     spSubscription = Some(sp.deliverEventFlowable(
       DefaultBlockParameterName.EARLIEST,
       DefaultBlockParameterName.LATEST)
-      .subscribe((event: StorageProvider.DeliverEventResponse) => {
-        log.info(s"Got SP Deliver event! key: ${Longs.fromByteArray(event.key)}, proof: ${event.proof.mkString(", ")}")
-      }))
-//      .filter((event: StorageProvider.DeliverEventResponse) =>
-//        Longs.fromByteArray(event.key) == key)
-//      .takeUntil(new Predicate[StorageProvider.DeliverEventResponse] {
-//        override def test(t: StorageProvider.DeliverEventResponse): Boolean = verify(key, SerializedAdProof @@ t.proof, callback)
-//      })
-//      .subscribe((_: StorageProvider.DeliverEventResponse) => {smSubscription match {
-//        case Some(sub) => sub.dispose()
-//        case _ =>
-//      }
+//      .subscribe((event: StorageProvider.DeliverEventResponse) => {
+//        log.info(s"Got SP Deliver event! key: ${Longs.fromByteArray(event.key)}, proof: ${event.proof.mkString(", ")}")
 //      }))
+      .filter((event: StorageProvider.DeliverEventResponse) =>
+        Longs.fromByteArray(event.key) == key)
+      .takeUntil(new Predicate[StorageProvider.DeliverEventResponse] {
+        override def test(t: StorageProvider.DeliverEventResponse): Boolean = verify(key, SerializedAdProof @@ t.proof, callback)
+      })
+      .subscribe((_: StorageProvider.DeliverEventResponse) => {smSubscription match {
+        case Some(sub) => sub.dispose()
+        case _ =>
+      }
+      }))
     log.info(s"Attempting to gGet Key: $key")
     sm.gGet(Longs.toByteArray(key)).send()
   }

@@ -11,7 +11,8 @@ import scala.collection.JavaConverters._
 
 class ChainDataOwner(
   sp: StorageProvider,
-  sm: StorageManager
+  sm: StorageManager,
+  shouldReplicate: Boolean = false
 ) extends DataOwner {
   private val log = Logger(getClass.getName)
 
@@ -45,8 +46,11 @@ class ChainDataOwner(
         _latestDigest = receivedDigest
         // No replication logic yet
         log.info(s"Updating digest, new digest: $receivedDigest")
-        sm.update(List(Array.ofDim[Byte](8)).asJava, List(Array.ofDim[Byte](8)).asJava, _latestDigest.slice(0, 32)).send()
-        //sm.update(kvs.keys.map(Longs.toByteArray).toList.asJava, kvs.values.toList.asJava, _latestDigest.slice(0, 32)).send()
+        if (shouldReplicate) {
+          sm.update(kvs.keys.map(Longs.toByteArray).toList.asJava, kvs.values.toList.asJava, _latestDigest.slice(0, 32)).send()
+        } else {
+          sm.update(List(Array.ofDim[Byte](8)).asJava, List(Array.ofDim[Byte](8)).asJava, _latestDigest.slice(0, 32)).send()
+        }
         true
       }
       case _ => false

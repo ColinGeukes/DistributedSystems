@@ -1,6 +1,7 @@
 package sgrub.playground
 
 import com.google.common.primitives.Longs
+import com.typesafe.scalalogging.Logger
 import org.web3j.crypto.WalletUtils
 import org.web3j.protocol.Web3j
 import org.web3j.protocol.core.DefaultBlockParameterName
@@ -18,6 +19,7 @@ import scala.io.StdIn
 import scala.util.{Failure, Success, Try}
 
 class ChainThings(gethPath: String) {
+  private val log = Logger(getClass.getName)
   private val web3 = Web3j.build(new HttpService("http://localhost:8101"))
   private val gasProvider = new StaticGasProvider(new BigInteger("1000000000"), new BigInteger("8000000"))
   private val credentials = WalletUtils.loadCredentials("password", s"$gethPath/node01/keystore/UTC--2021-03-14T10-55-22.116143363Z--f90b82d1f4466e7e83740cad7c29f4576334eeb4")
@@ -32,13 +34,13 @@ class ChainThings(gethPath: String) {
   def SMAddress: Option[String] = _smAddress
 
   def deploy(): (Try[StorageManager], Try[StorageProvider]) = {
-    println("Deploying contracts...")
+    log.info("Deploying contracts...")
     val tryContractSM = Try(StorageManager.deploy(web3, transactionManager, gasProvider).send())
     val tryContractSP = Try(StorageProvider.deploy(web3, transactionManager, gasProvider).send())
     if (tryContractSM.isSuccess) {
       val contract = tryContractSM.get
-      println(s"SM Transaction receipt: ${contract.getTransactionReceipt}")
-      println(s"SM Contract address: ${contract.getContractAddress}")
+      log.info(s"SM Transaction receipt: ${contract.getTransactionReceipt}")
+      log.info(s"SM Contract address: ${contract.getContractAddress}")
       if (!contract.isValid) {
         return (Failure(new InvalidParameterException("SM Contract was invalid")), tryContractSP)
       }
@@ -48,8 +50,8 @@ class ChainThings(gethPath: String) {
     }
     if (tryContractSP.isSuccess) {
       val contract = tryContractSP.get
-      println(s"SP Transaction receipt: ${contract.getTransactionReceipt}")
-      println(s"SP Contract address: ${contract.getContractAddress}")
+      log.info(s"SP Transaction receipt: ${contract.getTransactionReceipt}")
+      log.info(s"SP Contract address: ${contract.getContractAddress}")
       if (!contract.isValid) {
         return (tryContractSM, Failure(new InvalidParameterException("SP Contract was invalid")))
       }
@@ -86,7 +88,9 @@ class ChainThings(gethPath: String) {
         tSP match {
           case Success(sp) => {
             val ISP = new InMemoryStorageProvider
-            val DO = new ChainDataOwner(ISP, sm)
+            println("Make DO replicate? (y/n)")
+            val replicate = StdIn.readBoolean()
+            val DO = new ChainDataOwner(ISP, sm, replicate)
             val DU = new ChainDataUser(sp, sm)
             val someNewData = Map[Long, Array[Byte]](
               1L -> "Some Arbitrary Data".getBytes(),
@@ -96,23 +100,23 @@ class ChainThings(gethPath: String) {
             )
             DO.gPuts(someNewData)
             DU.gGet(1L, (key, value) => {
-              println(s"Holy shit it worked. Key: $key, value${new String(value)}")
+              log.info(s"Holy shit it worked. Key: $key, value${new String(value)}")
             })
             // Listen for event requests
             sm.requestEventFlowable(
               DefaultBlockParameterName.EARLIEST,
               DefaultBlockParameterName.LATEST)
               .subscribe((event: RequestEventResponse) => {
-                println(s"GOT A REQUEST EVENT HERE: key: ${Longs.fromByteArray(event.key)}, sender: ${event.sender}")
+                log.info(s"GOT A REQUEST EVENT HERE: key: ${Longs.fromByteArray(event.key)}, sender: ${event.sender}")
                 ISP.request(Longs.fromByteArray(event.key), proof => {
                   sp.emitDeliver(event.key, proof).send()
                 })
               })
           }
-          case _ => println("Deploying SP failed")
+          case _ => log.error("Deploying SP failed")
         }
       }
-      case _ => println("Deploying SM failed")
+      case _ => log.error("Deploying SM failed")
     }
 
   }
