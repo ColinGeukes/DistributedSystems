@@ -15,12 +15,16 @@ class InMemoryDataOwner(
   sp: StorageProvider
 ) extends DataOwner {
   private var _latestDigest: ADDigest = storageProvider.initialDigest
-  private val _users = mutable.Buffer.empty[DataUser]
+  private val _users = mutable.Buffer.empty[InMemoryDataUser]
   override def latestDigest: ADDigest = _latestDigest
 
-  override def storageProvider: StorageProvider = sp
+  private def storageProvider: StorageProvider = sp
 
-  def register(user: DataUser): Unit = {
+  /**
+   * Registers a data user to update with the latest digests and replication changes
+   * @param user The DU to update
+   */
+  def register(user: InMemoryDataUser): Unit = {
     _users += user
   }
 

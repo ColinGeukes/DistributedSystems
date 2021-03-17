@@ -10,7 +10,7 @@ import org.web3j.protocol.core.methods.request.EthFilter
 import org.web3j.protocol.http.HttpService
 import org.web3j.tx.{Contract, RawTransactionManager}
 import org.web3j.tx.gas.StaticGasProvider
-import sgrub.smartcontracts.generated.{Storage, StorageProvider}
+import sgrub.smartcontracts.generated.{Storage, StorageManager}
 
 import java.math.BigInteger
 import java.security.InvalidParameterException
@@ -40,7 +40,7 @@ class SmartcontractThings(gethPath: String) {
       }
       case "StorageProvider" => {
         println("Deploying StorageProvider contract...")
-        Try(StorageProvider.deploy(web3, transactionManager, gasProvider).send())
+        Try(StorageManager.deploy(web3, transactionManager, gasProvider).send())
       }
     }
     if (tryContract.isSuccess) {
@@ -64,7 +64,7 @@ class SmartcontractThings(gethPath: String) {
         case Some(addressExists) => {
           s match {
             case "Storage" => Try(Storage.load(addressExists, web3, transactionManager, gasProvider))
-            case "StorageProvider" => Try(StorageProvider.load(addressExists, web3, transactionManager, gasProvider))
+            case "StorageProvider" => Try(StorageManager.load(addressExists, web3, transactionManager, gasProvider))
           }
         }
         case _ => Failure(new InvalidParameterException("Storage has not been deployed yet"))
@@ -86,7 +86,7 @@ class SmartcontractThings(gethPath: String) {
     }
   }
 
-  def tryCall2(tryStorage: Try[StorageProvider]): Unit = {
+  def tryCall2(tryStorage: Try[StorageManager]): Unit = {
     tryStorage match {
       case Success(storage) => {
         println("key to store?")
@@ -100,7 +100,7 @@ class SmartcontractThings(gethPath: String) {
     }
   }
 
-  def tryCall3(tryStorage: Try[StorageProvider]): Unit = {
+  def tryCall3(tryStorage: Try[StorageManager]): Unit = {
     tryStorage match {
       case Success(storage) => {
         println("key to get?")
@@ -131,12 +131,12 @@ class SmartcontractThings(gethPath: String) {
     if (deployInput) {
       StdIn.readLine("Name of generated class? (Storage/StorageProvider)\n") match {
         case "Storage" => tryCall(deploy("Storage").asInstanceOf[Try[Storage]])
-        case "StorageProvider" => tryCall2(deploy("StorageProvider").asInstanceOf[Try[StorageProvider]])
+        case "StorageProvider" => tryCall2(deploy("StorageProvider").asInstanceOf[Try[StorageManager]])
       }
     } else {
       val generatedClass = StdIn.readLine("Name of generated class? (Storage/StorageProvider)\n")
       val inputAddress = StdIn.readLine("Please enter the storage contract address:\n")
-      tryCall3(connect_to_storage(Some(inputAddress), s = generatedClass).asInstanceOf[Try[StorageProvider]])
+      tryCall3(connect_to_storage(Some(inputAddress), s = generatedClass).asInstanceOf[Try[StorageManager]])
     }
   }
 
