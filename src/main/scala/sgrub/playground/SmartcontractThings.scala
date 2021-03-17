@@ -86,39 +86,39 @@ class SmartcontractThings(gethPath: String) {
     }
   }
 
-  def tryCall2(tryStorage: Try[StorageManager]): Unit = {
-    tryStorage match {
-      case Success(storage) => {
-        println("key to store?")
-        val toStore = BigInteger.valueOf(StdIn.readInt())
-        val bytes = "test".getBytes()
-        println(s"Storing test bytes at $toStore")
-        storage.update(toStore, bytes, bytes).send()
-        println("Stored")
-      }
-      case Failure(ex) => println(s"Failed with: $ex")
-    }
-  }
-
-  def tryCall3(tryStorage: Try[StorageManager]): Unit = {
-    tryStorage match {
-      case Success(storage) => {
-        println("key to get?")
-        val toGet = BigInteger.valueOf(StdIn.readInt())
-        println(s"Getting bytes at $toGet")
-        storage.gGet(toGet).send()
-        println("Request sent")
-        val receipt = _storage.get.getTransactionReceipt.get()
-        println("Printing transaction event log: ")
-        storage.getRequestEvents(receipt).forEach(e => {
-          val key = e.key
-          val sender = e.sender
-          println(s"found request for $key from $sender")
-        })
-      }
-      case Failure(ex) => println(s"Failed with: $ex")
-    }
-  }
+//  def tryCall2(tryStorage: Try[StorageManager]): Unit = {
+//    tryStorage match {
+//      case Success(storage) => {
+//        println("key to store?")
+//        val toStore = BigInteger.valueOf(StdIn.readInt())
+//        val bytes = "test".getBytes()
+//        println(s"Storing test bytes at $toStore")
+//        storage.update(toStore, bytes, bytes).send()
+//        println("Stored")
+//      }
+//      case Failure(ex) => println(s"Failed with: $ex")
+//    }
+//  }
+//
+//  def tryCall3(tryStorage: Try[StorageManager]): Unit = {
+//    tryStorage match {
+//      case Success(storage) => {
+//        println("key to get?")
+//        val toGet = BigInteger.valueOf(StdIn.readInt())
+//        println(s"Getting bytes at $toGet")
+//        storage.gGet(toGet).send()
+//        println("Request sent")
+//        val receipt = _storage.get.getTransactionReceipt.get()
+//        println("Printing transaction event log: ")
+//        storage.getRequestEvents(receipt).forEach(e => {
+//          val key = e.key
+//          val sender = e.sender
+//          println(s"found request for $key from $sender")
+//        })
+//      }
+//      case Failure(ex) => println(s"Failed with: $ex")
+//    }
+//  }
 
   def userInputThings(): Unit = {
     println(
@@ -131,12 +131,12 @@ class SmartcontractThings(gethPath: String) {
     if (deployInput) {
       StdIn.readLine("Name of generated class? (Storage/StorageProvider)\n") match {
         case "Storage" => tryCall(deploy("Storage").asInstanceOf[Try[Storage]])
-        case "StorageProvider" => tryCall2(deploy("StorageProvider").asInstanceOf[Try[StorageManager]])
+        //case "StorageProvider" => tryCall2(deploy("StorageProvider").asInstanceOf[Try[StorageManager]])
       }
     } else {
       val generatedClass = StdIn.readLine("Name of generated class? (Storage/StorageProvider)\n")
       val inputAddress = StdIn.readLine("Please enter the storage contract address:\n")
-      tryCall3(connect_to_storage(Some(inputAddress), s = generatedClass).asInstanceOf[Try[StorageManager]])
+      //tryCall3(connect_to_storage(Some(inputAddress), s = generatedClass).asInstanceOf[Try[StorageManager]])
     }
   }
 
