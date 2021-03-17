@@ -34,10 +34,14 @@ class SmartcontractThings(gethPath: String) {
   def deploy(s: String): Try[Any] = {
     println("Deploying contract...")
     val tryContract = s match {
-      case "Storage" => Try(Storage.deploy(
-        web3, transactionManager, gasProvider).send())
-      case "StorageProvider" => Try(StorageProvider.deploy(
-        web3, transactionManager, gasProvider).send())
+      case "Storage" => {
+        println("Deploying Storage contract...")
+        Try(Storage.deploy(web3, transactionManager, gasProvider).send())
+      }
+      case "StorageProvider" => {
+        println("Deploying StorageProvider contract...")
+        Try(StorageProvider.deploy(web3, transactionManager, gasProvider).send())
+      }
     }
     if (tryContract.isSuccess) {
       val contract = tryContract.get
@@ -130,8 +134,9 @@ class SmartcontractThings(gethPath: String) {
         case "StorageProvider" => tryCall2(deploy("StorageProvider").asInstanceOf[Try[StorageProvider]])
       }
     } else {
-      val inputAddress = StdIn.readLine("Please enter the storage contract address: ")
-      tryCall3(connect_to_storage(Some(inputAddress)).asInstanceOf[Try[StorageProvider]])
+      val generatedClass = StdIn.readLine("Name of generated class? (Storage/StorageProvider)\n")
+      val inputAddress = StdIn.readLine("Please enter the storage contract address:\n")
+      tryCall3(connect_to_storage(Some(inputAddress), s = generatedClass).asInstanceOf[Try[StorageProvider]])
     }
   }
 
