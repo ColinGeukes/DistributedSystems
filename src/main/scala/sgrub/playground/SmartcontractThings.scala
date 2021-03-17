@@ -6,14 +6,14 @@ import org.web3j.abi.datatypes.{Address, Event, Uint}
 import org.web3j.crypto.{RawTransaction, WalletUtils}
 import org.web3j.protocol.Web3j
 import org.web3j.protocol.core.DefaultBlockParameterName
-import org.web3j.protocol.core.methods.request.{EthFilter, Transaction}
+import org.web3j.protocol.core.methods.request.{EthFilter}
 import org.web3j.protocol.http.HttpService
 import org.web3j.tx.{Contract, RawTransactionManager}
 import org.web3j.tx.gas.StaticGasProvider
 import scorex.crypto.authds.SerializedAdProof
 import sgrub.smartcontracts.generated.{Storage, StorageProvider}
 import org.web3j.protocol.core.DefaultBlockParameterName
-import org.web3j.protocol.core.methods.response.EthGetTransactionCount
+import org.web3j.protocol.core.methods.response.Transaction
 
 import java.math.BigInteger
 import java.security.InvalidParameterException
@@ -128,7 +128,7 @@ class SmartcontractThings(gethPath: String) {
     send transaction with the data+proof to the requesting address.
     The from address needs to be included to compute the correct nonce
   */
-  def respondToEvent(key: Int, requester: String, from: String = "0xf90b82d1f4466e7e83740cad7c29f4576334eeb4") = {
+  def respondToEvent(key: Int, requester: String, from: String = "0xf90b82d1f4466e7e83740cad7c29f4576334eeb4"): Unit = {
     //get nonce for new transaction
     val count = web3.ethGetTransactionCount(from, DefaultBlockParameterName.LATEST).sendAsync.get
     val nonce = count.getTransactionCount
@@ -148,6 +148,11 @@ class SmartcontractThings(gethPath: String) {
     println("raw: " + result.getRawResponse)
     println("result: " + result.getResult)
     if (result.getError != null) println("error: " + result.getError.getMessage)
+
+    //TODO: Trying to get the transaction data....
+    val t = web3.ethGetTransactionReceipt(result.getTransactionHash)
+    println("transaction receipt params: ")
+    t.getParams.forEach(p => println(p.toString))
   }
 
   def userInputThings(): Unit = {
