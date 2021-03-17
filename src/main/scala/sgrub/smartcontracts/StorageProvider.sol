@@ -7,7 +7,7 @@ contract StorageProvider {
     // a deliver event with indexed key and value to filter for
     event deliver(bytes8 indexed key, bytes proof);
 
-    function emitDeliver(bytes8 key, bytes memory proof) public payable {
+    function emitDeliver(bytes8 key, bytes memory proof) public {
         emit deliver(key, proof);
     }
 }

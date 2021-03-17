@@ -105,7 +105,7 @@ class ChainThings(gethPath: String) {
               .subscribe((event: RequestEventResponse) => {
                 println(s"GOT A REQUEST EVENT HERE: key: ${Longs.fromByteArray(event.key)}, sender: ${event.sender}")
                 ISP.request(Longs.fromByteArray(event.key), proof => {
-                  sp.emitDeliver(event.key, proof)
+                  sp.emitDeliver(event.key, proof).send()
                 })
               })
           }

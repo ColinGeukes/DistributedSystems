@@ -26,7 +26,7 @@ class ChainDataUser(
       DefaultBlockParameterName.EARLIEST,
       DefaultBlockParameterName.LATEST)
       .subscribe((event: StorageManager.DeliverEventResponse) => {
-        log.info(s"Got SM Deliver event! key: ${event.key.mkString("\n")}, value: ${new String(event.value)}")
+        log.info(s"Got SM Deliver event! key: ${Longs.fromByteArray(event.key)}, value: ${new String(event.value)}")
       }))
 //      .filter((event: StorageManager.DeliverEventResponse) =>
 //        Longs.fromByteArray(event.key) == key)
@@ -44,7 +44,7 @@ class ChainDataUser(
       DefaultBlockParameterName.EARLIEST,
       DefaultBlockParameterName.LATEST)
       .subscribe((event: StorageProvider.DeliverEventResponse) => {
-        log.info(s"Got SP Deliver event! key: ${event.key.mkString("\n")}, proof: ${event.proof.mkString("\n")}")
+        log.info(s"Got SP Deliver event! key: ${Longs.fromByteArray(event.key)}, proof: ${event.proof.mkString(", ")}")
       }))
 //      .filter((event: StorageProvider.DeliverEventResponse) =>
 //        Longs.fromByteArray(event.key) == key)
