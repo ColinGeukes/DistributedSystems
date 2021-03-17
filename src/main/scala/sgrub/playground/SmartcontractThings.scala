@@ -3,14 +3,17 @@ package sgrub.playground
 import io.reactivex.subscribers.DisposableSubscriber
 import org.web3j.abi.{EventEncoder, TypeReference}
 import org.web3j.abi.datatypes.{Address, Event, Uint}
-import org.web3j.crypto.WalletUtils
+import org.web3j.crypto.{RawTransaction, WalletUtils}
 import org.web3j.protocol.Web3j
 import org.web3j.protocol.core.DefaultBlockParameterName
-import org.web3j.protocol.core.methods.request.EthFilter
+import org.web3j.protocol.core.methods.request.{EthFilter, Transaction}
 import org.web3j.protocol.http.HttpService
 import org.web3j.tx.{Contract, RawTransactionManager}
 import org.web3j.tx.gas.StaticGasProvider
+import scorex.crypto.authds.SerializedAdProof
 import sgrub.smartcontracts.generated.{Storage, StorageProvider}
+import org.web3j.protocol.core.DefaultBlockParameterName
+import org.web3j.protocol.core.methods.response.EthGetTransactionCount
 
 import java.math.BigInteger
 import java.security.InvalidParameterException
@@ -120,6 +123,33 @@ class SmartcontractThings(gethPath: String) {
     }
   }
 
+  /*
+    when an event happens with a KV request from some client
+    send transaction with the data+proof to the requesting address
+  */
+  def respondToEvent(key: Int, requester: String): Boolean = {
+    //get nonce for new transaction
+    val count = web3.ethGetTransactionCount(_address.get, DefaultBlockParameterName.LATEST).sendAsync.get
+    val nonce = count.getTransactionCount
+
+    //transaction with 0 ETH and some custom data
+    val transaction = RawTransaction.createTransaction(
+      nonce,
+      gasProvider.getGasPrice,
+      gasProvider.getGasLimit(),
+      requester, //to
+      new BigInteger("0"), //value of transaction
+      "some data for key:  " + key.toString //data of transaction => should be proof bytes
+    );
+    println("Trying to send....")
+    val result = transactionManager.signAndSend(transaction)
+    println("SENT")
+    println("raw: " + result.getRawResponse)
+    println("result: " + result.getResult)
+    println("error: " + result.getError.getMessage)
+    true
+  }
+
   def userInputThings(): Unit = {
     println(
       "\n" +
@@ -164,11 +194,26 @@ class SmartcontractThings(gethPath: String) {
 
     // subscriber logic for handling incoming event logs
     val subscriber = new DisposableSubscriber[Any]() {
-      override def onNext(t: Any): Unit = println("SUCCESS:  " + t.toString)
+      override def onNext(t: Any): Unit = {
+        println("SUCCESS:  " + t.toString)
+        //parse key and address from string formatted as below:
+        //Log{removed=false, logIndex='0x0', transactionIndex='0x0', transactionHash='0x479e01d34c7b733ff2d882fcd7a47a0c751ee1d38b28758c0f4057279cedc9c2', blockHash='0x5424c7d60878b19f9674ebc74018ebef459e1820bf8a76c31fa5d3f584b351a8', blockNumber='0x936', address='0xd99480d7863ff1d4e13ddf1356e395039cd230d7', data='0x', type='null', topics=[0x9ad8a98020b6dad44acbf88ecd6cf7536823e301cab64c14479f81dc2980898e, 0x0000000000000000000000000000000000000000000000000000000000000002, 0x000000000000000000000000f90b82d1f4466e7e83740cad7c29f4576334eeb4]}
+        val topics = t.toString.stripSuffix("]}").split(", 0x")
+        val l = topics.length
+        val address = strip0(topics(l-1))
+        val key = strip0(topics(l-2)).toInt
+        respondToEvent(key, address)
+      }
 
       override def onError(t: Throwable): Unit = t.printStackTrace()
 
       override def onComplete(): Unit = println("stopped listening")
+    }
+
+    //strip ALL leading 0s
+    def strip0(s: String): String = {
+      if(s.substring(0,1).equals("0")) strip0(s.substring(1))
+      else s
     }
 
     def listen(): Unit = {

@@ -17,6 +17,7 @@ object SgrubStart {
     //Contract address: 0xf83ae7a717596b94e197fe6c413623a109afb558
     smartcontractThings.userInputThings()
 
+
     //ScryptoInMemoryThings.tryInMemoryGrub()
   }
 }
