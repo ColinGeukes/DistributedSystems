@@ -125,16 +125,17 @@ class SmartcontractThings(gethPath: String) {
 
   /*
     when an event happens with a KV request from some client
-    send transaction with the data+proof to the requesting address
+    send transaction with the data+proof to the requesting address.
+    The from address needs to be included to compute the correct nonce
   */
-  def respondToEvent(key: Int, requester: String): Boolean = {
+  def respondToEvent(key: Int, requester: String, from: String = "0xf90b82d1f4466e7e83740cad7c29f4576334eeb4") = {
     //get nonce for new transaction
-    val count = web3.ethGetTransactionCount(_address.get, DefaultBlockParameterName.LATEST).sendAsync.get
+    val count = web3.ethGetTransactionCount(from, DefaultBlockParameterName.LATEST).sendAsync.get
     val nonce = count.getTransactionCount
 
     //transaction with 0 ETH and some custom data
     val transaction = RawTransaction.createTransaction(
-      nonce,
+      nonce.add(new BigInteger("1")),
       gasProvider.getGasPrice,
       gasProvider.getGasLimit(),
       requester, //to
@@ -146,8 +147,7 @@ class SmartcontractThings(gethPath: String) {
     println("SENT")
     println("raw: " + result.getRawResponse)
     println("result: " + result.getResult)
-    println("error: " + result.getError.getMessage)
-    true
+    if (result.getError != null) println("error: " + result.getError.getMessage)
   }
 
   def userInputThings(): Unit = {
