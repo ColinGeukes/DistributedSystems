@@ -1,7 +1,5 @@
 package sgrub.contracts
 
-import scorex.crypto.authds.{ADDigest, SerializedAdProof}
-
 /**
  * Represents the Data User consuming data updates by key (should be a smart contract?)
  */

@@ -1,8 +1,5 @@
 package sgrub.smartcontracts.generated;
 
-import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.Collections;
 import org.web3j.abi.TypeReference;
 import org.web3j.abi.datatypes.Function;
 import org.web3j.abi.datatypes.Type;
@@ -15,6 +12,10 @@ import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.tx.Contract;
 import org.web3j.tx.TransactionManager;
 import org.web3j.tx.gas.ContractGasProvider;
+
+import java.math.BigInteger;
+import java.util.Arrays;
+import java.util.Collections;
 
 /**
  * <p>Auto generated code.

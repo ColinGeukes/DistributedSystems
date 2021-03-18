@@ -4,6 +4,11 @@ description := "GRuB for Scala"
 
 scalaVersion := "2.12.12"
 
+assemblyMergeStrategy in assembly := {
+  case PathList("META-INF", xs @ _*) => MergeStrategy.discard
+  case x => MergeStrategy.first
+}
+
 resolvers ++= Seq(
   "Sonatype Releases" at "https://oss.sonatype.org/content/repositories/releases/",
 )
@@ -33,3 +38,6 @@ libraryDependencies ++= Seq(
   "ch.qos.logback"              % "logback-classic"         % "1.2.3",
   "com.typesafe.scala-logging"  %% "scala-logging"          % "3.9.2",
 )
+
+// Config
+libraryDependencies += "com.typesafe" % "config" % "1.4.1"
