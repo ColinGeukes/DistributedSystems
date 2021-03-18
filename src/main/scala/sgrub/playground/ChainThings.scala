@@ -12,9 +12,11 @@ import sgrub.chain.{ChainDataOwner, ChainDataUser}
 import sgrub.inmemory.InMemoryStorageProvider
 import sgrub.smartcontracts.generated.StorageManager.RequestEventResponse
 import sgrub.smartcontracts.generated.{Storage, StorageManager, StorageProvider}
-
 import java.math.BigInteger
 import java.security.InvalidParameterException
+
+import sgrub.chain.ChainTools.logGasUsage
+
 import scala.io.StdIn
 import scala.util.{Failure, Success, Try}
 
@@ -39,7 +41,9 @@ class ChainThings(gethPath: String) {
     val tryContractSP = Try(StorageProvider.deploy(web3, transactionManager, gasProvider).send())
     if (tryContractSM.isSuccess) {
       val contract = tryContractSM.get
-      log.info(s"SM Transaction receipt: ${contract.getTransactionReceipt}")
+      val receipt = contract.getTransactionReceipt
+      log.info(s"SM Transaction receipt: $receipt")
+      receipt.ifPresent(r => log.info(s"SM deploy gas used: ${r.getGasUsed}"))
       log.info(s"SM Contract address: ${contract.getContractAddress}")
       if (!contract.isValid) {
         return (Failure(new InvalidParameterException("SM Contract was invalid")), tryContractSP)
@@ -50,7 +54,9 @@ class ChainThings(gethPath: String) {
     }
     if (tryContractSP.isSuccess) {
       val contract = tryContractSP.get
-      log.info(s"SP Transaction receipt: ${contract.getTransactionReceipt}")
+      val receipt = contract.getTransactionReceipt
+      log.info(s"SP Transaction receipt: $receipt")
+      receipt.ifPresent(r => log.info(s"SP deploy gas used: ${r.getGasUsed}"))
       log.info(s"SP Contract address: ${contract.getContractAddress}")
       if (!contract.isValid) {
         return (tryContractSM, Failure(new InvalidParameterException("SP Contract was invalid")))
@@ -100,16 +106,17 @@ class ChainThings(gethPath: String) {
             )
             DO.gPuts(someNewData)
             DU.gGet(1L, (key, value) => {
-              log.info(s"Holy shit it worked. Key: $key, value${new String(value)}")
+              log.info(s"Value returned. Key: $key, Value: ${new String(value)}")
             })
             // Listen for event requests
             sm.requestEventFlowable(
               DefaultBlockParameterName.EARLIEST,
               DefaultBlockParameterName.LATEST)
+              .take(1) // Only taking 1 so it can end...
               .subscribe((event: RequestEventResponse) => {
-                log.info(s"GOT A REQUEST EVENT HERE: key: ${Longs.fromByteArray(event.key)}, sender: ${event.sender}")
+                log.info(s"Got a request event: key: ${Longs.fromByteArray(event.key)}, sender: ${event.sender}")
                 ISP.request(Longs.fromByteArray(event.key), proof => {
-                  sp.emitDeliver(event.key, proof).send()
+                  logGasUsage("SP Emit Deliver", () => sp.emitDeliver(event.key, proof).send())
                 })
               })
           }

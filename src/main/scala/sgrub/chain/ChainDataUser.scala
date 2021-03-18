@@ -7,6 +7,7 @@ import io.reactivex.functions.Predicate
 import org.web3j.protocol.core.DefaultBlockParameterName
 import scorex.crypto.authds.avltree.batch.{BatchAVLVerifier, Lookup}
 import scorex.crypto.authds.{ADDigest, ADKey, SerializedAdProof}
+import sgrub.chain.ChainTools.logGasUsage
 import sgrub.contracts._
 import sgrub.smartcontracts.generated.{StorageManager, StorageProvider}
 
@@ -57,7 +58,20 @@ class ChainDataUser(
       }
       }))
     log.info(s"Attempting to gGet Key: $key")
-    sm.gGet(Longs.toByteArray(key)).send()
+    logGasUsage("gGet", () => sm.gGet(Longs.toByteArray(key)).send()) match {
+      case Success(_) => // Do nothing
+      case Failure(exception) => {
+        log.error(s"gGet failed, stopping subscriptions. Exception: $exception")
+        smSubscription match {
+          case Some(sub) => sub.dispose()
+          case _ =>
+        }
+        spSubscription match {
+          case Some(sub) => sub.dispose()
+          case _ =>
+        }
+      }
+    }
   }
 
   private def verify(key: Long, proof: SerializedAdProof, callback: (Long, Array[Byte]) => Unit): Boolean = {

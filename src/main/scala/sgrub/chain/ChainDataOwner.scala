@@ -4,10 +4,12 @@ import com.google.common.primitives.Longs
 import com.typesafe.scalalogging.Logger
 import scorex.crypto.authds.{ADDigest, ADKey, ADValue, EmptyByteArray}
 import scorex.crypto.authds.avltree.batch.{BatchAVLVerifier, InsertOrUpdate}
+import sgrub.chain.ChainTools.logGasUsage
 import sgrub.contracts.{DataOwner, DataUser, DigestType, HashFunction, KeyLength, StorageProvider, hf}
 import sgrub.smartcontracts.generated.StorageManager
 
 import scala.collection.JavaConverters._
+import scala.util.{Failure, Success}
 
 class ChainDataOwner(
   sp: StorageProvider,
@@ -47,11 +49,24 @@ class ChainDataOwner(
         // No replication logic yet
         log.info(s"Updating digest, new digest: $receivedDigest")
         if (shouldReplicate) {
-          sm.update(kvs.keys.map(Longs.toByteArray).toList.asJava, kvs.values.toList.asJava, _latestDigest).send()
+          logGasUsage("Update digest and replicate",
+            () => sm.update(kvs.keys.map(Longs.toByteArray).toList.asJava, kvs.values.toList.asJava, _latestDigest).send()) match {
+            case Success(_) => true
+            case Failure(exception) => {
+              log.error("Update digest and replicate failed")
+              false
+            }
+          }
         } else {
-          sm.updateDigestOnly(_latestDigest).send()
+          logGasUsage("Update digest",
+            () => sm.updateDigestOnly(_latestDigest).send()) match {
+            case Success(_) => true
+            case Failure(exception) => {
+              log.error("Update digest failed")
+              false
+            }
+          }
         }
-        true
       }
       case _ => false
     }
