@@ -49,7 +49,7 @@ class ChainDataUser(
       .filter((event: StorageProvider.DeliverEventResponse) =>
         Longs.fromByteArray(event.key) == key)
       .takeUntil(new Predicate[StorageProvider.DeliverEventResponse] {
-        override def test(t: StorageProvider.DeliverEventResponse): Boolean = verify(key, SerializedAdProof @@ t.proof, callback)
+        override def test(t: StorageProvider.DeliverEventResponse): Boolean = verify(key, t.proof.asInstanceOf[SerializedAdProof], callback)
       })
       .subscribe((_: StorageProvider.DeliverEventResponse) => {smSubscription match {
         case Some(sub) => sub.dispose()
@@ -62,8 +62,11 @@ class ChainDataUser(
 
   private def verify(key: Long, proof: SerializedAdProof, callback: (Long, Array[Byte]) => Unit): Boolean = {
     log.info(s"Verifying for key: $key")
+    log.info("Getting digest...")
+    val latestDigest = ADDigest @@ sm.getDigest().send()
+    log.info(s"Got digest: $latestDigest")
     val verifier = new BatchAVLVerifier[DigestType, HashFunction](
-      ADDigest @@ sm.digest().send(),
+      latestDigest,
       proof,
       keyLength = KeyLength,
       valueLengthOpt = None,

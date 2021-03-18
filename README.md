@@ -4,7 +4,7 @@
 
 * Scala 2.12.* (2.12.12+)
 * JVM 1.8 compatible JDK
-* SBT 1.4.7+
+* SBT 1.4.9+
 * geth 1.10.1+
 
 ## Run

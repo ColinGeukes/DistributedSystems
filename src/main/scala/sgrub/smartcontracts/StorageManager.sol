@@ -18,7 +18,7 @@ contract StorageManager {
 
     //on-chain storage
     mapping(bytes8 => data) datastore;
-    bytes32 public digest;
+    bytes32 digest;
 
     //owner of the contract
     address owner;
@@ -39,6 +39,14 @@ contract StorageManager {
 
     // a deliver event with indexed key and value to filter for
     event deliver(bytes8 indexed key, bytes value);
+
+    /**
+     * @dev Return value
+     * @return value of 'digest'
+     */
+    function getDigest() public view returns (bytes32){
+        return digest;
+    }
 
     // callback deliver with value from storage if it exists, or emit request for off-chain data
     function gGet(bytes8 key) public {
