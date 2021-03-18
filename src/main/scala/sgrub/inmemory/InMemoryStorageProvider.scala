@@ -3,7 +3,7 @@ package sgrub.inmemory
 import com.google.common.primitives.Longs
 import scorex.crypto.authds.avltree.batch._
 import scorex.crypto.authds.{ADDigest, ADKey, ADValue, SerializedAdProof}
-import sgrub.contracts.{DigestType, HashFunction, KeyLength, StorageProvider, hf}
+import sgrub.contracts._
 
 import scala.util.Success
 

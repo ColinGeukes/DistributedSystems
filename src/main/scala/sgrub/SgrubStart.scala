@@ -4,7 +4,7 @@ import com.typesafe.scalalogging.Logger
 import sgrub.chain.{ChainDataOwner, ChainDataUser, ChainTools, StorageProviderChainListener}
 import sgrub.console.BatchReader
 import sgrub.inmemory.InMemoryStorageProvider
-import sgrub.playground.{ChainThings, ScryptoInMemoryThings, SmartcontractThings}
+import sgrub.playground.ScryptoInMemoryThings
 
 import scala.io.StdIn
 
@@ -43,7 +43,7 @@ object SgrubStart {
         do {
           println("Enter a key to gGet:")
           DU.gGet(StdIn.readLong(), (key, value) => {
-            println(s"Received a value. Key: $key, Value: $value")
+            println(s"Received a value. Key: $key, Value: ${new String(value)}")
           })
         } while ({
           println("gGet a new value? (y/n) -- Don't answer to continue waiting.")

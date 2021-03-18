@@ -1,20 +1,21 @@
 package sgrub.playground
 
+import java.math.BigInteger
+import java.security.InvalidParameterException
+import java.util
+
 import io.reactivex.subscribers.DisposableSubscriber
-import org.web3j.abi.{EventEncoder, TypeReference}
 import org.web3j.abi.datatypes.{Address, Event, Uint}
+import org.web3j.abi.{EventEncoder, TypeReference}
 import org.web3j.crypto.WalletUtils
 import org.web3j.protocol.Web3j
 import org.web3j.protocol.core.DefaultBlockParameterName
 import org.web3j.protocol.core.methods.request.EthFilter
 import org.web3j.protocol.http.HttpService
-import org.web3j.tx.{Contract, RawTransactionManager}
 import org.web3j.tx.gas.StaticGasProvider
+import org.web3j.tx.{Contract, RawTransactionManager}
 import sgrub.smartcontracts.generated.{Storage, StorageManager}
 
-import java.math.BigInteger
-import java.security.InvalidParameterException
-import java.util
 import scala.io.StdIn
 import scala.util.{Failure, Success, Try}
 

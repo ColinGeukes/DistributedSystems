@@ -4,6 +4,8 @@ description := "GRuB for Scala"
 
 scalaVersion := "2.12.12"
 
+publishMavenStyle := true
+
 resolvers ++= Seq(
   "Sonatype Releases" at "https://oss.sonatype.org/content/repositories/releases/",
 )

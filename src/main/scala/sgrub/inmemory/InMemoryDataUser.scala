@@ -3,8 +3,7 @@ package sgrub.inmemory
 import com.google.common.primitives.Longs
 import scorex.crypto.authds.avltree.batch.{BatchAVLVerifier, Lookup}
 import scorex.crypto.authds.{ADDigest, ADKey, SerializedAdProof}
-import sgrub.contracts.{DataUser, DigestType, HashFunction, KeyLength, StorageProvider, hf}
-import sgrub.playground.MinimalVerifier
+import sgrub.contracts._
 
 import scala.collection.mutable
 import scala.util.{Failure, Success}

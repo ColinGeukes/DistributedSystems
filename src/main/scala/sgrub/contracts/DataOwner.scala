@@ -1,7 +1,6 @@
 package sgrub.contracts
 
 import scorex.crypto.authds.ADDigest
-import sgrub.inmemory.InMemoryStorageProvider
 
 /**
  * Represents the Data Owner producing a stream of data updates

@@ -4,6 +4,7 @@ import com.google.common.primitives.Longs
 import com.typesafe.scalalogging.Logger
 import io.reactivex.disposables.Disposable
 import io.reactivex.functions.Predicate
+import org.bouncycastle.util.encoders.Hex
 import org.web3j.crypto.WalletUtils
 import org.web3j.protocol.core.DefaultBlockParameterName
 import org.web3j.tx.RawTransactionManager
@@ -94,7 +95,7 @@ class ChainDataUser(
     log.info(s"Verifying for key: $key")
     log.info("Getting digest...")
     val latestDigest = ADDigest @@ storageManager.getDigest().send()
-    log.info(s"Got digest: $latestDigest")
+    log.info(s"Got digest: ${Hex.toHexString(latestDigest)}")
     if (latestDigest.length != DigestLength) {
       log.error(s"Digest length is incorrect, expected $DigestLength, got ${latestDigest.length}")
       return false
