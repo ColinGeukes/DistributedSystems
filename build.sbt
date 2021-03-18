@@ -4,7 +4,10 @@ description := "GRuB for Scala"
 
 scalaVersion := "2.12.12"
 
-publishMavenStyle := true
+assemblyMergeStrategy in assembly := {
+  case PathList("META-INF", xs @ _*) => MergeStrategy.discard
+  case x => MergeStrategy.first
+}
 
 resolvers ++= Seq(
   "Sonatype Releases" at "https://oss.sonatype.org/content/repositories/releases/",
