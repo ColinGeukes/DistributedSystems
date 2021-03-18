@@ -11,7 +11,7 @@
 
 Start the private network and miner, follow the instructions in `geth_private/README.md`.
 
-* Start SBT: `sbt`
+* Start SBT with a variable pointing to the config file: `sbt -Dconfig.file=application.conf`
 * Compile: `compile`
-* Run with an argument pointing to the geth directory: `run geth_private`
+* Run: `run`
 
