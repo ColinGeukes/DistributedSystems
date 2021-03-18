@@ -94,7 +94,7 @@ class ChainThings(gethPath: String) {
     }
 
     var reader: BufferedSource = null
-    try {n
+    try {
       reader = scala.io.Source.fromFile(filepath)
       val lines = reader.getLines().mkString.split(";")
 
