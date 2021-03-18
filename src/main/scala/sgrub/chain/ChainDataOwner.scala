@@ -1,25 +1,47 @@
 package sgrub.chain
 
+import java.math.BigInteger
+
 import com.google.common.primitives.Longs
 import com.typesafe.scalalogging.Logger
+import org.bouncycastle.util.encoders.Hex
+import org.web3j.crypto.WalletUtils
+import org.web3j.protocol.Web3j
+import org.web3j.protocol.http.HttpService
+import org.web3j.tx.RawTransactionManager
+import org.web3j.tx.gas.StaticGasProvider
 import scorex.crypto.authds.{ADDigest, ADKey, ADValue, EmptyByteArray}
 import scorex.crypto.authds.avltree.batch.{BatchAVLVerifier, InsertOrUpdate}
 import sgrub.chain.ChainTools.logGasUsage
-import sgrub.contracts.{DataOwner, DataUser, DigestType, HashFunction, KeyLength, StorageProvider, hf}
+import sgrub.config
+import sgrub.contracts.{DataOwner, DigestType, HashFunction, KeyLength, StorageProvider, hf}
 import sgrub.smartcontracts.generated.StorageManager
 
 import scala.collection.JavaConverters._
-import scala.util.{Failure, Success}
+import scala.util.{Failure, Success, Try}
 
 class ChainDataOwner(
   sp: StorageProvider,
-  sm: StorageManager,
-  shouldReplicate: Boolean = false
+  shouldReplicate: Boolean = false,
+  smAddress: String = config.getString("sgrub.smAddress"),
 ) extends DataOwner {
   private val log = Logger(getClass.getName)
+  private val credentials = WalletUtils.loadCredentials(config.getString("sgrub.do.password"), config.getString("sgrub.do.keyLocation"))
+  private val transactionManager = new RawTransactionManager(web3, credentials, config.getInt("sgrub.chainId"))
 
+  private val storageManager: StorageManager = Try(StorageManager.load(smAddress, web3, transactionManager, gasProvider)) match {
+    case Success(sm) => sm
+    case Failure(exception) => {
+      log.error(s"Unable to load StorageManager with address $smAddress, exception: $exception")
+      sys.exit(1)
+    }
+  }
   private def storageProvider: StorageProvider = sp
-  private var _latestDigest: ADDigest = storageProvider.initialDigest
+  private var _latestDigest: ADDigest = config.getString("sgrub.startingDigest") match {
+    case digest if !digest.isEmpty => ADDigest @@ Hex.decode(digest)
+    case _ => storageProvider.initialDigest
+  }
+//  private var _latestDigest: ADDigest = storageProvider.initialDigest
   override def latestDigest: ADDigest = _latestDigest
 
   /**
@@ -47,10 +69,10 @@ class ChainDataOwner(
       case Some(digest) if digest.sameElements(receivedDigest) => {
         _latestDigest = receivedDigest
         // No replication logic yet
-        log.info(s"Updating digest, new digest: $receivedDigest")
+        log.info(s"Updating digest, new digest: ${Hex.toHexString(receivedDigest)}")
         if (shouldReplicate) {
           logGasUsage("Update digest and replicate",
-            () => sm.update(kvs.keys.map(Longs.toByteArray).toList.asJava, kvs.values.toList.asJava, _latestDigest).send()) match {
+            () => storageManager.update(kvs.keys.map(Longs.toByteArray).toList.asJava, kvs.values.toList.asJava, _latestDigest).send()) match {
             case Success(_) => true
             case Failure(exception) => {
               log.error("Update digest and replicate failed")
@@ -59,7 +81,7 @@ class ChainDataOwner(
           }
         } else {
           logGasUsage("Update digest",
-            () => sm.updateDigestOnly(_latestDigest).send()) match {
+            () => storageManager.updateDigestOnly(_latestDigest).send()) match {
             case Success(_) => true
             case Failure(exception) => {
               log.error("Update digest failed")

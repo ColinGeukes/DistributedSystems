@@ -11,34 +11,35 @@ import org.web3j.tx.gas.StaticGasProvider
 import sgrub.chain.{ChainDataOwner, ChainDataUser}
 import sgrub.inmemory.InMemoryStorageProvider
 import sgrub.smartcontracts.generated.StorageManager.RequestEventResponse
-import sgrub.smartcontracts.generated.{Storage, StorageManager, StorageProvider}
+import sgrub.smartcontracts.generated.{Storage, StorageManager, StorageProviderEventManager}
 import java.math.BigInteger
 import java.security.InvalidParameterException
 
 import sgrub.chain.ChainTools.logGasUsage
+import sgrub.config
 
 import scala.io.StdIn
 import scala.util.{Failure, Success, Try}
 
-class ChainThings(gethPath: String) {
+object ChainThings {
   private val log = Logger(getClass.getName)
   private val web3 = Web3j.build(new HttpService("http://localhost:8101"))
   private val gasProvider = new StaticGasProvider(new BigInteger("1000000000"), new BigInteger("8000000"))
-  private val credentials = WalletUtils.loadCredentials("password", s"$gethPath/node01/keystore/UTC--2021-03-14T10-55-22.116143363Z--f90b82d1f4466e7e83740cad7c29f4576334eeb4")
+  private val credentials = WalletUtils.loadCredentials("password", config.getString("sgrub.do.keyLocation"))
   private val transactionManager = new RawTransactionManager(web3, credentials, 15)
-  private var _sp: Option[StorageProvider] = None
+  private var _sp: Option[StorageProviderEventManager] = None
   private var _spAddress: Option[String] = None
   private var _sm: Option[StorageManager] = None
   private var _smAddress: Option[String] = None
-  def SP: Option[StorageProvider] = _sp
+  def SP: Option[StorageProviderEventManager] = _sp
   def SM: Option[StorageManager] = _sm
   def SPAddress: Option[String] = _spAddress
   def SMAddress: Option[String] = _smAddress
 
-  def deploy(): (Try[StorageManager], Try[StorageProvider]) = {
+  def deploy(): (Try[StorageManager], Try[StorageProviderEventManager]) = {
     log.info("Deploying contracts...")
     val tryContractSM = Try(StorageManager.deploy(web3, transactionManager, gasProvider).send())
-    val tryContractSP = Try(StorageProvider.deploy(web3, transactionManager, gasProvider).send())
+    val tryContractSP = Try(StorageProviderEventManager.deploy(web3, transactionManager, gasProvider).send())
     if (tryContractSM.isSuccess) {
       val contract = tryContractSM.get
       val receipt = contract.getTransactionReceipt
@@ -68,11 +69,11 @@ class ChainThings(gethPath: String) {
     (tryContractSM, tryContractSP)
   }
 
-  def connect_to_sp(storageAddress: Option[String] = _spAddress): Try[StorageProvider] = {
+  def connect_to_sp(storageAddress: Option[String] = _spAddress): Try[StorageProviderEventManager] = {
     SP match {
       case Some(storageExists) => Success(storageExists)
       case _ => storageAddress match {
-        case Some(addressExists) => Try(StorageProvider.load(addressExists, web3, transactionManager, gasProvider))
+        case Some(addressExists) => Try(StorageProviderEventManager.load(addressExists, web3, transactionManager, gasProvider))
         case _ => Failure(new InvalidParameterException("Storage Provider has not been deployed yet"))
       }
     }
@@ -88,7 +89,7 @@ class ChainThings(gethPath: String) {
     }
   }
 
-  def tryChain(tSM: Try[StorageManager], tSP: Try[StorageProvider]): Unit = {
+  def tryChain(tSM: Try[StorageManager], tSP: Try[StorageProviderEventManager]): Unit = {
     tSM match {
       case Success(sm) => {
         tSP match {
@@ -96,7 +97,7 @@ class ChainThings(gethPath: String) {
             val ISP = new InMemoryStorageProvider
             println("Make DO replicate? (y/n)")
             val replicate = StdIn.readBoolean()
-            val DO = new ChainDataOwner(ISP, sm, replicate)
+            val DO = new ChainDataOwner(ISP, replicate)
             val DU = new ChainDataUser(sp, sm)
             val someNewData = Map[Long, Array[Byte]](
               1L -> "Some Arbitrary Data".getBytes(),

@@ -19,8 +19,6 @@ object SgrubStart {
 //    smartcontractThings.userInputThings()
 
 //    ScryptoInMemoryThings.tryInMemoryGrub()
-    println(s"sgrub.gethPath = ${config.getString("sgrub.gethPath")}")
-    val chainthings = new ChainThings(config.getString("sgrub.gethPath"))
-    chainthings.userInputThings()
+    ChainThings.userInputThings()
   }
 }

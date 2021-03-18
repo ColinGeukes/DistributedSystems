@@ -9,12 +9,12 @@ import scorex.crypto.authds.avltree.batch.{BatchAVLVerifier, Lookup}
 import scorex.crypto.authds.{ADDigest, ADKey, SerializedAdProof}
 import sgrub.chain.ChainTools.logGasUsage
 import sgrub.contracts._
-import sgrub.smartcontracts.generated.{StorageManager, StorageProvider}
+import sgrub.smartcontracts.generated.{StorageManager, StorageProviderEventManager}
 
 import scala.util.{Failure, Success}
 
 class ChainDataUser(
-  sp: StorageProvider,
+  sp: StorageProviderEventManager,
   sm: StorageManager
 ) extends DataUser {
   private val log = Logger(getClass.getName)
@@ -47,12 +47,12 @@ class ChainDataUser(
 //      .subscribe((event: StorageProvider.DeliverEventResponse) => {
 //        log.info(s"Got SP Deliver event! key: ${Longs.fromByteArray(event.key)}, proof: ${event.proof.mkString(", ")}")
 //      }))
-      .filter((event: StorageProvider.DeliverEventResponse) =>
+      .filter((event: StorageProviderEventManager.DeliverEventResponse) =>
         Longs.fromByteArray(event.key) == key)
-      .takeUntil(new Predicate[StorageProvider.DeliverEventResponse] {
-        override def test(t: StorageProvider.DeliverEventResponse): Boolean = verify(key, t.proof.asInstanceOf[SerializedAdProof], callback)
+      .takeUntil(new Predicate[StorageProviderEventManager.DeliverEventResponse] {
+        override def test(t: StorageProviderEventManager.DeliverEventResponse): Boolean = verify(key, t.proof.asInstanceOf[SerializedAdProof], callback)
       })
-      .subscribe((_: StorageProvider.DeliverEventResponse) => {smSubscription match {
+      .subscribe((_: StorageProviderEventManager.DeliverEventResponse) => {smSubscription match {
         case Some(sub) => sub.dispose()
         case _ =>
       }
@@ -79,6 +79,10 @@ class ChainDataUser(
     log.info("Getting digest...")
     val latestDigest = ADDigest @@ sm.getDigest().send()
     log.info(s"Got digest: $latestDigest")
+    if (latestDigest.length != DigestLength) {
+      log.error(s"Digest length is incorrect, expected $DigestLength, got ${latestDigest.length}")
+      return false
+    }
     val verifier = new BatchAVLVerifier[DigestType, HashFunction](
       latestDigest,
       proof,
