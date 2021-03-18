@@ -26,3 +26,6 @@ target
 
 # geth
 **/geth/
+
+# local contracts
+*.contract

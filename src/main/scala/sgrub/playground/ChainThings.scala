@@ -17,10 +17,13 @@ import java.security.InvalidParameterException
 
 import sgrub.chain.ChainTools.logGasUsage
 
-import scala.io.StdIn
+import scala.io.{BufferedSource, StdIn}
 import scala.util.{Failure, Success, Try}
+import java.io._
+import java.nio.file.{Files, Paths}
 
 class ChainThings(gethPath: String) {
+
   private val log = Logger(getClass.getName)
   private val web3 = Web3j.build(new HttpService("http://localhost:8101"))
   private val gasProvider = new StaticGasProvider(new BigInteger("1000000000"), new BigInteger("8000000"))
@@ -65,7 +68,65 @@ class ChainThings(gethPath: String) {
       _sp = Some(contract)
       _spAddress = Some(contract.getContractAddress)
     }
+
+    // Store the ContractSM and ContractSP inside a local file.
+    create_new_contract_file(tryContractSM.get.getContractAddress, tryContractSP.get.getContractAddress)
+
     (tryContractSM, tryContractSP)
+  }
+
+  def create_new_contract_file(addressSM: String, addressSP : String, path: String = "contracts", extension: String = "contract"): Unit ={
+    val contractId = retrieve_contract_id(path, extension)
+    val pathname = s"$path/$contractId./$extension"
+    val pw = new PrintWriter(new File(pathname))
+    pw.write(s"${addressSM};${addressSP}")
+    pw.close
+
+    log.info(s"Created a new contract file: $pathname")
+  }
+
+  def retrieve_contract_file(contractId: String, path: String = "./contracts", extension: String = "contract"): (Option[String], Option[String]) ={
+    val filepath = s"$path/$contractId.$extension"
+    println(filepath)
+    if(!Files.exists(Paths.get(filepath))){
+      println("Path not found")
+      return (null, null)
+    }
+
+    var reader: BufferedSource = null
+    try {
+      reader = scala.io.Source.fromFile(filepath)
+      val lines = reader.getLines().mkString.split(";")
+
+      // Check if the contract file was valid.
+      if(lines.length < 2){
+        log.error(s"Contract file ($filepath) was invalid.")
+        return (null, null)
+      }
+
+      // Return the addresses in the contract file.
+      return(Some(lines(0)), Some(lines(1)))
+    } catch  {
+      case e: Exception => e.printStackTrace()
+    } finally {
+      if(reader != null){
+        reader.close()
+      }
+    }
+
+    // Contract addresses not found.
+    (null, null)
+  }
+
+  def retrieve_contract_id(path: String, extension: String): Int = {
+    // Retrieve a non existing contract id.
+    var contractId = 1;
+    while(Files.exists(Paths.get(s"$path/$contractId.$extension"))){
+      contractId += 1
+    }
+
+    // Return the contract id.
+    contractId
   }
 
   def connect_to_sp(storageAddress: Option[String] = _spAddress): Try[StorageProvider] = {
@@ -140,8 +201,27 @@ class ChainThings(gethPath: String) {
       val (trySM, trySP) = deploy()
       tryChain(trySM, trySP)
     } else {
-      val spAddress = StdIn.readLine("SP Address?\n")
-      val smAddress = StdIn.readLine("SM Address?\n")
+      println("Contract file? (leave empty for custom input)")
+      val contractFileInput = StdIn.readLine()
+      val contractFile = retrieve_contract_file(contractFileInput)
+
+      var spAddress: String = null
+      var smAddress: String = null
+
+      // Ask for the SM address if null.
+      contractFile match {
+        case (Some(a1), Some(a2)) => {
+          spAddress = a1.toString
+          smAddress = a2.toString
+          log.info(s"Using SPAddress ($spAddress) and SMAddress ($smAddress)")
+        }
+        case (None, None) => {
+          spAddress = StdIn.readLine("SP Address?\n")
+          smAddress = StdIn.readLine("SM Address?\n")
+        }
+      }
+
+      // Try the chain.
       tryChain(connect_to_sm(Some(smAddress)), connect_to_sp(Some(spAddress)))
     }
   }
