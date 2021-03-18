@@ -77,7 +77,7 @@ class ChainThings(gethPath: String) {
 
   def create_new_contract_file(addressSM: String, addressSP : String, path: String = "contracts", extension: String = "contract"): Unit ={
     val contractId = retrieve_contract_id(path, extension)
-    val pathname = s"$path/$contractId./$extension"
+    val pathname = s"$path/$contractId.$extension"
     val pw = new PrintWriter(new File(pathname))
     pw.write(s"${addressSM};${addressSP}")
     pw.close
@@ -94,7 +94,7 @@ class ChainThings(gethPath: String) {
     }
 
     var reader: BufferedSource = null
-    try {
+    try {n
       reader = scala.io.Source.fromFile(filepath)
       val lines = reader.getLines().mkString.split(";")
 
