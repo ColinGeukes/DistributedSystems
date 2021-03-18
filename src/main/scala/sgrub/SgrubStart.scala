@@ -7,8 +7,8 @@ object SgrubStart {
   private val log = Logger(getClass.getName)
 
   def main(args: Array[String]): Unit = {
-    if (args.length < 1) {
-      log.error("No arguments provided. Please provide the path to geth_private")
+    if (!config.isResolved) {
+      log.error("Unable to resolve config")
       sys.exit(1)
     }
     log.info("Starting...")
@@ -19,7 +19,8 @@ object SgrubStart {
 //    smartcontractThings.userInputThings()
 
 //    ScryptoInMemoryThings.tryInMemoryGrub()
-    val chainthings = new ChainThings(args(0))
+    println(s"sgrub.gethPath = ${config.getString("sgrub.gethPath")}")
+    val chainthings = new ChainThings(config.getString("sgrub.gethPath"))
     chainthings.userInputThings()
   }
 }
