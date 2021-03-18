@@ -140,8 +140,8 @@ class ChainThings(gethPath: String) {
       val (trySM, trySP) = deploy()
       tryChain(trySM, trySP)
     } else {
-      val spAddress = StdIn.readLine("SP Address? ")
-      val smAddress = StdIn.readLine("SM Address? ")
+      val spAddress = StdIn.readLine("SP Address?\n")
+      val smAddress = StdIn.readLine("SM Address?\n")
       tryChain(connect_to_sm(Some(smAddress)), connect_to_sp(Some(spAddress)))
     }
   }
