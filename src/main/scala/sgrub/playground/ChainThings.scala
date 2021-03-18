@@ -87,11 +87,13 @@ class ChainThings(gethPath: String) {
 
   def retrieve_contract_file(contractId: String, path: String = "./contracts", extension: String = "contract"): (Option[String], Option[String]) ={
     val filepath = s"$path/$contractId.$extension"
-    println(filepath)
+
+    // Check if the contract file exists.
     if(!Files.exists(Paths.get(filepath))){
-      println("Path not found")
       return (null, null)
     }
+
+    log.info(s"Reading the contract file: $filepath")
 
     var reader: BufferedSource = null
     try {
@@ -211,11 +213,13 @@ class ChainThings(gethPath: String) {
       // Ask for the SM address if null.
       contractFile match {
         case (Some(a1), Some(a2)) => {
+          // Use the addresses from the file.
           spAddress = a1.toString
           smAddress = a2.toString
-          log.info(s"Using SPAddress ($spAddress) and SMAddress ($smAddress)")
+          log.info(s"Using ServiceProviderAddress ($spAddress) and StorageManagerAddress ($smAddress)")
         }
         case (None, None) => {
+          // No addresses found, ask for custom input.
           spAddress = StdIn.readLine("SP Address?\n")
           smAddress = StdIn.readLine("SM Address?\n")
         }
