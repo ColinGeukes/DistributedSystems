@@ -4,31 +4,49 @@ import com.google.common.primitives.Longs
 import com.typesafe.scalalogging.Logger
 import io.reactivex.disposables.Disposable
 import io.reactivex.functions.Predicate
+import org.web3j.crypto.WalletUtils
 import org.web3j.protocol.core.DefaultBlockParameterName
+import org.web3j.tx.RawTransactionManager
 import scorex.crypto.authds.avltree.batch.{BatchAVLVerifier, Lookup}
 import scorex.crypto.authds.{ADDigest, ADKey, SerializedAdProof}
 import sgrub.chain.ChainTools.logGasUsage
+import sgrub.config
 import sgrub.contracts._
 import sgrub.smartcontracts.generated.{StorageManager, StorageProviderEventManager}
 
-import scala.util.{Failure, Success}
+import scala.concurrent.duration.SECONDS
+import scala.util.{Failure, Success, Try}
 
 class ChainDataUser(
-  sp: StorageProviderEventManager,
-  sm: StorageManager
+  smAddress: String = config.getString("sgrub.smContractAddress"),
+  spAddress: String = config.getString("sgrub.spContractAddress")
 ) extends DataUser {
   private val log = Logger(getClass.getName)
+  private val credentials = WalletUtils.loadCredentials(config.getString("sgrub.do.password"), config.getString("sgrub.do.keyLocation"))
+  private val transactionManager = new RawTransactionManager(web3, credentials, config.getInt("sgrub.chainId"))
+  private val storageManager: StorageManager = Try(StorageManager.load(smAddress, web3, transactionManager, gasProvider)) match {
+    case Success(sm) => sm
+    case Failure(exception) => {
+      log.error(s"Unable to load StorageManager with address $smAddress, exception: $exception")
+      sys.exit(1)
+    }
+  }
+  private val eventManager: StorageProviderEventManager = Try(StorageProviderEventManager.load(spAddress, web3, transactionManager, gasProvider)) match {
+    case Success(sm) => sm
+    case Failure(exception) => {
+      log.error(s"Unable to load StorageProviderEventManager with address $spAddress, exception: $exception")
+      sys.exit(1)
+    }
+  }
 
   override def gGet(key: Long, callback: (Long, Array[Byte]) => Unit): Unit = {
     log.info("Starting SM and SP deliver subscriptions")
     var smSubscription: Option[Disposable] = None
     var spSubscription: Option[Disposable] = None
-    smSubscription = Some(sm.deliverEventFlowable(
+    smSubscription = Some(storageManager.deliverEventFlowable(
       DefaultBlockParameterName.EARLIEST,
       DefaultBlockParameterName.LATEST)
-//      .subscribe((event: StorageManager.DeliverEventResponse) => {
-//        log.info(s"Got SM Deliver event! key: ${Longs.fromByteArray(event.key)}, value: ${new String(event.value)}")
-//      }))
+      .timeout(config.getInt("sgrub.du.gGetTimeout"), SECONDS)
       .filter((event: StorageManager.DeliverEventResponse) =>
         Longs.fromByteArray(event.key) == key)
       .takeUntil(new Predicate[StorageManager.DeliverEventResponse] {
@@ -41,24 +59,22 @@ class ChainDataUser(
           case _ =>
         }
       }))
-    spSubscription = Some(sp.deliverEventFlowable(
+    spSubscription = Some(eventManager.deliverEventFlowable(
       DefaultBlockParameterName.EARLIEST,
       DefaultBlockParameterName.LATEST)
-//      .subscribe((event: StorageProvider.DeliverEventResponse) => {
-//        log.info(s"Got SP Deliver event! key: ${Longs.fromByteArray(event.key)}, proof: ${event.proof.mkString(", ")}")
-//      }))
       .filter((event: StorageProviderEventManager.DeliverEventResponse) =>
         Longs.fromByteArray(event.key) == key)
       .takeUntil(new Predicate[StorageProviderEventManager.DeliverEventResponse] {
         override def test(t: StorageProviderEventManager.DeliverEventResponse): Boolean = verify(key, t.proof.asInstanceOf[SerializedAdProof], callback)
       })
+      .timeout(config.getInt("sgrub.du.gGetTimeout"), SECONDS)
       .subscribe((_: StorageProviderEventManager.DeliverEventResponse) => {smSubscription match {
         case Some(sub) => sub.dispose()
         case _ =>
       }
       }))
     log.info(s"Attempting to gGet Key: $key")
-    logGasUsage("gGet", () => sm.gGet(Longs.toByteArray(key)).send()) match {
+    logGasUsage("gGet", () => storageManager.gGet(Longs.toByteArray(key)).send()) match {
       case Success(_) => // Do nothing
       case Failure(exception) => {
         log.error(s"gGet failed, stopping subscriptions. Exception: $exception")
@@ -77,7 +93,7 @@ class ChainDataUser(
   private def verify(key: Long, proof: SerializedAdProof, callback: (Long, Array[Byte]) => Unit): Boolean = {
     log.info(s"Verifying for key: $key")
     log.info("Getting digest...")
-    val latestDigest = ADDigest @@ sm.getDigest().send()
+    val latestDigest = ADDigest @@ storageManager.getDigest().send()
     log.info(s"Got digest: $latestDigest")
     if (latestDigest.length != DigestLength) {
       log.error(s"Digest length is incorrect, expected $DigestLength, got ${latestDigest.length}")

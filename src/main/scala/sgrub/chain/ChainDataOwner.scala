@@ -23,7 +23,7 @@ import scala.util.{Failure, Success, Try}
 class ChainDataOwner(
   sp: StorageProvider,
   shouldReplicate: Boolean = false,
-  smAddress: String = config.getString("sgrub.smAddress"),
+  smAddress: String = config.getString("sgrub.smContractAddress"),
 ) extends DataOwner {
   private val log = Logger(getClass.getName)
   private val credentials = WalletUtils.loadCredentials(config.getString("sgrub.do.password"), config.getString("sgrub.do.keyLocation"))
@@ -37,7 +37,7 @@ class ChainDataOwner(
     }
   }
   private def storageProvider: StorageProvider = sp
-  private var _latestDigest: ADDigest = config.getString("sgrub.startingDigest") match {
+  private var _latestDigest: ADDigest = config.getString("sgrub.do.startingDigest") match {
     case digest if !digest.isEmpty => ADDigest @@ Hex.decode(digest)
     case _ => storageProvider.initialDigest
   }
@@ -51,7 +51,7 @@ class ChainDataOwner(
    * @return True when the KVs were updated successfully and securely, otherwise returns False
    */
   override def gPuts(kvs: Map[Long, Array[Byte]]): Boolean = {
-    log.info(s"gPuts: ${kvs.toString()}")
+    log.info(s"gPuts: ${kvs.map(kv => (kv._1, new String(kv._2)))}")
     val (receivedDigest, receivedProof) = storageProvider.gPuts(kvs)
     val ops = kvs.map(kv => InsertOrUpdate(ADKey @@ Longs.toByteArray(kv._1), ADValue @@ kv._2))
     val verifier = new BatchAVLVerifier[DigestType, HashFunction](
@@ -68,14 +68,13 @@ class ChainDataOwner(
     verifier.digest match {
       case Some(digest) if digest.sameElements(receivedDigest) => {
         _latestDigest = receivedDigest
-        // No replication logic yet
         log.info(s"Updating digest, new digest: ${Hex.toHexString(receivedDigest)}")
         if (shouldReplicate) {
           logGasUsage("Update digest and replicate",
             () => storageManager.update(kvs.keys.map(Longs.toByteArray).toList.asJava, kvs.values.toList.asJava, _latestDigest).send()) match {
             case Success(_) => true
             case Failure(exception) => {
-              log.error("Update digest and replicate failed")
+              log.error(s"Update digest and replicate failed: $exception")
               false
             }
           }
@@ -84,7 +83,7 @@ class ChainDataOwner(
             () => storageManager.updateDigestOnly(_latestDigest).send()) match {
             case Success(_) => true
             case Failure(exception) => {
-              log.error("Update digest failed")
+              log.error(s"Update digest failed: $exception")
               false
             }
           }

@@ -16,8 +16,8 @@ import scala.util.{Failure, Success, Try}
 
 class StorageProviderChainListener(
   storageProvider: StorageProvider,
-  smAddress: String = config.getString("sgrub.smAddress"),
-  spAddress: String = config.getString("sgrub.spAddress")
+  smAddress: String = config.getString("sgrub.smContractAddress"),
+  spAddress: String = config.getString("sgrub.spContractAddress")
 ) {
   private val log = Logger(getClass.getName)
   private val credentials = WalletUtils.loadCredentials(config.getString("sgrub.sp.password"), config.getString("sgrub.sp.keyLocation"))

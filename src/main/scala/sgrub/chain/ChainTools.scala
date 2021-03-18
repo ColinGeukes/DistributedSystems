@@ -1,14 +1,9 @@
 package sgrub.chain
 
-import java.math.BigInteger
-
 import com.typesafe.scalalogging.Logger
 import org.web3j.crypto.WalletUtils
-import org.web3j.protocol.Web3j
 import org.web3j.protocol.core.methods.response.TransactionReceipt
-import org.web3j.protocol.http.HttpService
 import org.web3j.tx.RawTransactionManager
-import org.web3j.tx.gas.StaticGasProvider
 import sgrub.config
 import sgrub.smartcontracts.generated.{StorageManager, StorageProviderEventManager}
 

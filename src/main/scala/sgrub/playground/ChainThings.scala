@@ -8,7 +8,7 @@ import org.web3j.protocol.core.DefaultBlockParameterName
 import org.web3j.protocol.http.HttpService
 import org.web3j.tx.{Contract, RawTransactionManager}
 import org.web3j.tx.gas.StaticGasProvider
-import sgrub.chain.{ChainDataOwner, ChainDataUser}
+import sgrub.chain.{ChainDataOwner, ChainDataUser, StorageProviderChainListener}
 import sgrub.inmemory.InMemoryStorageProvider
 import sgrub.smartcontracts.generated.StorageManager.RequestEventResponse
 import sgrub.smartcontracts.generated.{Storage, StorageManager, StorageProviderEventManager}
@@ -98,7 +98,7 @@ object ChainThings {
             println("Make DO replicate? (y/n)")
             val replicate = StdIn.readBoolean()
             val DO = new ChainDataOwner(ISP, replicate)
-            val DU = new ChainDataUser(sp, sm)
+            val DU = new ChainDataUser()
             val someNewData = Map[Long, Array[Byte]](
               1L -> "Some Arbitrary Data".getBytes(),
               2L -> "Some More Arbitrary Data".getBytes(),
@@ -109,17 +109,8 @@ object ChainThings {
             DU.gGet(1L, (key, value) => {
               log.info(s"Value returned. Key: $key, Value: ${new String(value)}")
             })
-            // Listen for event requests
-            sm.requestEventFlowable(
-              DefaultBlockParameterName.EARLIEST,
-              DefaultBlockParameterName.LATEST)
-              .take(1) // Only taking 1 so it can end...
-              .subscribe((event: RequestEventResponse) => {
-                log.info(s"Got a request event: key: ${Longs.fromByteArray(event.key)}, sender: ${event.sender}")
-                ISP.request(Longs.fromByteArray(event.key), proof => {
-                  logGasUsage("SP Emit Deliver", () => sp.emitDeliver(event.key, proof).send())
-                })
-              })
+            val listener = new StorageProviderChainListener(ISP)
+            listener.listen()
           }
           case _ => log.error("Deploying SP failed")
         }
