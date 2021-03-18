@@ -4,6 +4,10 @@
 
 ```shell
 geth --datadir node01 init genesis.json
+```
+
+Once the network has been initialized, or if you've initialized it before, start the node.
+```shell
 geth --identity "node01" --datadir node01 --ipcdisable --allow-insecure-unlock --port 30301 --http --http.api admin,personal,eth,net,web3,miner --http.port 8101
 ```
 
