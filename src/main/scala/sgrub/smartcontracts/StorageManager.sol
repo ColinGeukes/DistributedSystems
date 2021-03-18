@@ -18,7 +18,7 @@ contract StorageManager {
 
     //on-chain storage
     mapping(bytes8 => data) datastore;
-    bytes32 digest;
+    bytes digest;
 
     //owner of the contract
     address owner;
@@ -30,7 +30,7 @@ contract StorageManager {
 
     // modifier for functions that can only be executed by the owner of the contract
     modifier onlyOwner() {
-        require(msg.sender==owner);
+        require(msg.sender==owner, "Only the contract owner can call this function");
         _;
     }
 
@@ -44,7 +44,7 @@ contract StorageManager {
      * @dev Return value
      * @return value of 'digest'
      */
-    function getDigest() public view returns (bytes32){
+    function getDigest() public view returns (bytes memory){
         return digest;
     }
 
@@ -61,7 +61,14 @@ contract StorageManager {
     }
 
     // DO can use this to update the data
-    function update(bytes8[] memory keys, bytes[] memory values, bytes32 _digest) public onlyOwner {
+    function updateDigestOnly(bytes memory _digest) public onlyOwner {
+        require(_digest.length == 33, "Digest must be 33 bytes");
+        digest = _digest;
+    }
+
+    // DO can use this to update the data
+    function update(bytes8[] memory keys, bytes[] memory values, bytes memory _digest) public onlyOwner {
+        require(_digest.length == 33, "Digest must be 33 bytes");
         digest = _digest;
         for (uint i=0; i<keys.length; ++i){
             datastore[keys[i]] = data(values[i], true);

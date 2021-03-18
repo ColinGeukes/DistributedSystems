@@ -7,7 +7,7 @@ import org.bouncycastle.crypto.digests.KeccakDigest
 // When calling, make sure to remove the Tag from the digest...
 class MinimalVerifier(latestDigest: Array[Byte]) {
   val keyLength = 8
-  val digestSize = 32
+  val digestSize = 33
 
   // We'll have to figure out how to do this, too
   def hash(toHash: Array[Byte]): Array[Byte] = {
@@ -77,9 +77,9 @@ class MinimalVerifier(latestDigest: Array[Byte]) {
   def manualVerify(key: Array[Byte], proof: Array[Byte], callback: Option[Array[Byte]] => Unit): Boolean = {
     // Make sure this is Digest32
     if (latestDigest.length == digestSize) {
-      val labelLength = digestSize
+      val labelLength = digestSize - 1
       // Convert Byte to Int
-      val rootNodeHeight = latestDigest(31) & 0xFF
+      val rootNodeHeight = latestDigest(32) & 0xFF
       var value: Option[Array[Byte]] = None
       val maxNodes = 2 * rootNodeHeight + 2
       var numNodes = 0
@@ -132,7 +132,7 @@ class MinimalVerifier(latestDigest: Array[Byte]) {
       }
       if (s.size == 1) {
         val root = s.head
-        if (latestDigest.sameElements(root.label)) {
+        if (latestDigest.slice(0,32).sameElements(root.label)) {
           callback(value)
           return true
         } else {

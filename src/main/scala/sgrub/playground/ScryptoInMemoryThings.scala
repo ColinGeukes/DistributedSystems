@@ -49,7 +49,7 @@ object ScryptoInMemoryThings {
     })
 
     println("MinimalVerifier gets...")
-    val minV = new MinimalVerifier(DO1.latestDigest.slice(0,32))
+    val minV = new MinimalVerifier(DO1.latestDigest.slice(0,33))
     for (key <- 1L to 5L) {
       println(s"Key: $key")
       StorageProvider.request(key, proof => {

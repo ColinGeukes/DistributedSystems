@@ -47,9 +47,9 @@ class ChainDataOwner(
         // No replication logic yet
         log.info(s"Updating digest, new digest: $receivedDigest")
         if (shouldReplicate) {
-          sm.update(kvs.keys.map(Longs.toByteArray).toList.asJava, kvs.values.toList.asJava, _latestDigest.slice(0, 32)).send()
+          sm.update(kvs.keys.map(Longs.toByteArray).toList.asJava, kvs.values.toList.asJava, _latestDigest).send()
         } else {
-          sm.update(List(Array.ofDim[Byte](8)).asJava, List(Array.ofDim[Byte](8)).asJava, _latestDigest.slice(0, 32)).send()
+          sm.updateDigestOnly(_latestDigest).send()
         }
         true
       }
