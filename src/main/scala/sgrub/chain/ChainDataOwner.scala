@@ -54,6 +54,7 @@ class ChainDataOwner(
             case Success(_) => true
             case Failure(exception) => {
               log.error("Update digest and replicate failed")
+              exception.printStackTrace()
               false
             }
           }

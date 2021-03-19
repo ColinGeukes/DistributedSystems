@@ -214,11 +214,11 @@ class ChainThings(gethPath: String) {
       contractFile match {
         case (Some(a1), Some(a2)) => {
           // Use the addresses from the file.
-          spAddress = a1.toString
-          smAddress = a2.toString
+          spAddress = a2.toString
+          smAddress = a1.toString
           log.info(s"Using ServiceProviderAddress ($spAddress) and StorageManagerAddress ($smAddress)")
         }
-        case (None, None) => {
+        case (null, null) => {
           // No addresses found, ask for custom input.
           spAddress = StdIn.readLine("SP Address?\n")
           smAddress = StdIn.readLine("SM Address?\n")
