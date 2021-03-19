@@ -45,7 +45,7 @@ class ChainDataUser(
     var smSubscription: Option[Disposable] = None
     var spSubscription: Option[Disposable] = None
     smSubscription = Some(storageManager.deliverEventFlowable(
-      DefaultBlockParameterName.EARLIEST,
+      DefaultBlockParameterName.LATEST,
       DefaultBlockParameterName.LATEST)
       .timeout(config.getInt("sgrub.du.gGetTimeout"), SECONDS)
       .filter((event: StorageManager.DeliverEventResponse) =>
@@ -61,7 +61,7 @@ class ChainDataUser(
         }
       }))
     spSubscription = Some(eventManager.deliverEventFlowable(
-      DefaultBlockParameterName.EARLIEST,
+      DefaultBlockParameterName.LATEST,
       DefaultBlockParameterName.LATEST)
       .filter((event: StorageProviderEventManager.DeliverEventResponse) =>
         Longs.fromByteArray(event.key) == key)
@@ -100,28 +100,32 @@ class ChainDataUser(
       log.error(s"Digest length is incorrect, expected $DigestLength, got ${latestDigest.length}")
       return false
     }
-    val verifier = new BatchAVLVerifier[DigestType, HashFunction](
+    Try(new BatchAVLVerifier[DigestType, HashFunction](
       latestDigest,
       proof,
       keyLength = KeyLength,
       valueLengthOpt = None,
       maxNumOperations = Some(1),
       maxDeletes = Some(0)
-    )(hf)
-
-    verifier.performOneOperation(Lookup(ADKey @@ Longs.toByteArray(key))) match {
-      case Success(successResult) => successResult match {
-        case Some(existResult) => {
-          callback(key, existResult)
-          true
+    )(hf)) match {
+      case Success(verifier) => verifier.performOneOperation(Lookup(ADKey @@ Longs.toByteArray(key))) match {
+        case Success(successResult) => successResult match {
+          case Some(existResult) => {
+            callback(key, existResult)
+            true
+          }
+          case _ => {
+            log.error(s"Fail. No value for key: $key")
+            false
+          }
         }
-        case _ => {
-          log.error(s"Fail. No value for key: $key")
+        case Failure(exception) => {
+          log.error(s"Fail. $exception")
           false
         }
       }
       case Failure(exception) => {
-        log.error(s"Fail. $exception")
+        log.error(s"Something went wrong during initialization of the verifier. $exception")
         false
       }
     }

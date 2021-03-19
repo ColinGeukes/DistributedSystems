@@ -43,7 +43,7 @@ class StorageProviderChainListener(
       case Some(subscription) => subscription
       case _ => {
         val subscription = storageManager.requestEventFlowable(
-          DefaultBlockParameterName.EARLIEST,
+          DefaultBlockParameterName.LATEST,
           DefaultBlockParameterName.LATEST)
           .subscribe((event: RequestEventResponse) => {
             log.info(s"Got a request event: key: ${Longs.fromByteArray(event.key)}, sender: ${event.sender}")
