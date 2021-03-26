@@ -31,6 +31,7 @@ class ExperimentBatches(maxBytes: Int, maxBatches: Int, rndDistribute: Boolean) 
     }
 
     if(currentBytes > maxBytes) {
+      // Stop the loop.
       running = false
 
       // Write results to file.
@@ -39,9 +40,10 @@ class ExperimentBatches(maxBytes: Int, maxBatches: Int, rndDistribute: Boolean) 
         element.write(pw)
       })
       pw.close
+    }
 
-
-    } else {
+    // Continue with the experiments.
+    else {
       startExperiment(currentBytes, currentBatches)
     }
   }
@@ -70,7 +72,7 @@ class ExperimentBatches(maxBytes: Int, maxBatches: Int, rndDistribute: Boolean) 
       // For each key we insert a batch.
       for(batch <- 0 until batches){
         // Fill the key with a random batch array of size bytes. The byte corresponds to a readable char.
-        result((rndKey + batch) % Long.MaxValue) = Array.fill(bytes)((scala.util.Random.nextInt(126-48) + 48).toByte)
+        result((rndKey + batch) % Long.MaxValue) = Array.fill(bytes)((scala.util.Random.nextInt(90-56) + 56).toByte)
       }
     }
 
@@ -85,21 +87,22 @@ class ExperimentBatches(maxBytes: Int, maxBatches: Int, rndDistribute: Boolean) 
           currentBytes = bytesLeft
         }
 
-        result((rndKey + batch) % Long.MaxValue) = Array.fill(currentBytes)((scala.util.Random.nextInt(126-48) + 48).toByte)
+        result((rndKey + batch) % Long.MaxValue) = Array.fill(currentBytes)((scala.util.Random.nextInt(90-56) + 56).toByte)
         bytesLeft -= currentBytes
       }
       // Add the remainder to the last key.
-      result((rndKey + batches - 1) % Long.MaxValue) = Array.fill(bytesLeft)((scala.util.Random.nextInt(126-48) + 48).toByte)
+      result((rndKey + batches - 1) % Long.MaxValue) = Array.fill(bytesLeft)((scala.util.Random.nextInt(90-56) + 56).toByte)
     }
 
 
     // Return the result.
     result.toMap
   }
-}
 
-private class ExperimentResult(bytes: Int, batches: Int, gasUsed: BigInt){
-  def write(printWriter: PrintWriter): Unit ={
-    printWriter.write(s"$bytes;$batches;$gasUsed\n")
+  private class ExperimentResult(bytes: Int, batches: Int, gasUsed: BigInt){
+    def write(printWriter: PrintWriter): Unit ={
+      printWriter.write(s"$bytes;$batches;$gasUsed\n")
+    }
   }
 }
+

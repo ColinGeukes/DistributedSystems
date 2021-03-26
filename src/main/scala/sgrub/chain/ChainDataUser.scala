@@ -22,17 +22,17 @@ class ChainDataUser(
   smAddress: String = config.getString("sgrub.smContractAddress"),
   spAddress: String = config.getString("sgrub.spContractAddress")
 ) extends DataUser {
-  private val log = Logger(getClass.getName)
-  private val credentials = WalletUtils.loadCredentials(config.getString("sgrub.do.password"), config.getString("sgrub.do.keyLocation"))
-  private val transactionManager = new RawTransactionManager(web3, credentials, config.getInt("sgrub.chainId"))
-  private val storageManager: StorageManager = Try(StorageManager.load(smAddress, web3, transactionManager, gasProvider)) match {
+  protected val log = Logger(getClass.getName)
+  protected val credentials = WalletUtils.loadCredentials(config.getString("sgrub.do.password"), config.getString("sgrub.do.keyLocation"))
+  protected val transactionManager = new RawTransactionManager(web3, credentials, config.getInt("sgrub.chainId"))
+  protected val storageManager: StorageManager = Try(StorageManager.load(smAddress, web3, transactionManager, gasProvider)) match {
     case Success(sm) => sm
     case Failure(exception) => {
       log.error(s"Unable to load StorageManager with address $smAddress, exception: $exception")
       sys.exit(1)
     }
   }
-  private val eventManager: StorageProviderEventManager = Try(StorageProviderEventManager.load(spAddress, web3, transactionManager, gasProvider)) match {
+  protected val eventManager: StorageProviderEventManager = Try(StorageProviderEventManager.load(spAddress, web3, transactionManager, gasProvider)) match {
     case Success(sm) => sm
     case Failure(exception) => {
       log.error(s"Unable to load StorageProviderEventManager with address $spAddress, exception: $exception")
@@ -91,7 +91,7 @@ class ChainDataUser(
     }
   }
 
-  private def verify(key: Long, proof: SerializedAdProof, callback: (Long, Array[Byte]) => Unit): Boolean = {
+  protected def verify(key: Long, proof: SerializedAdProof, callback: (Long, Array[Byte]) => Unit): Boolean = {
     log.info(s"Verifying for key: $key")
     log.info("Getting digest...")
     val latestDigest = ADDigest @@ storageManager.getDigest().send()
