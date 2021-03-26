@@ -1,55 +1,25 @@
-package sgrub.chain
-
-import java.math.BigInteger
-
+package sgrub.experiments
 import com.google.common.primitives.Longs
-import com.typesafe.scalalogging.Logger
 import org.bouncycastle.util.encoders.Hex
-import org.web3j.crypto.WalletUtils
-import org.web3j.protocol.Web3j
-import org.web3j.protocol.http.HttpService
-import org.web3j.tx.RawTransactionManager
-import org.web3j.tx.gas.StaticGasProvider
-import scorex.crypto.authds.{ADDigest, ADKey, ADValue, EmptyByteArray}
+import org.web3j.protocol.core.methods.response.TransactionReceipt
 import scorex.crypto.authds.avltree.batch.{BatchAVLVerifier, InsertOrUpdate}
-import sgrub.chain.ChainTools.logGasUsage
+import scorex.crypto.authds.{ADKey, ADValue}
+import sgrub.chain.ChainDataOwner
+import sgrub.chain.ChainTools.{log, logGasUsage}
 import sgrub.config
-import sgrub.contracts.{DataOwner, DigestType, HashFunction, KeyLength, StorageProvider, hf}
-import sgrub.smartcontracts.generated.StorageManager
+import sgrub.contracts._
 
 import scala.collection.JavaConverters._
 import scala.util.{Failure, Success, Try}
 
-class ChainDataOwner(
+class ChainDataOwnerExperiment(
   sp: StorageProvider,
+  callback: BigInt => Unit,
   shouldReplicate: Boolean = false,
   smAddress: String = config.getString("sgrub.smContractAddress"),
-) extends DataOwner {
-  protected val log = Logger(getClass.getName)
-  protected val credentials = WalletUtils.loadCredentials(config.getString("sgrub.do.password"), config.getString("sgrub.do.keyLocation"))
-  protected val transactionManager = new RawTransactionManager(web3, credentials, config.getInt("sgrub.chainId"))
+) extends ChainDataOwner(sp, shouldReplicate, smAddress) {
 
-  protected val storageManager: StorageManager = Try(StorageManager.load(smAddress, web3, transactionManager, gasProvider)) match {
-    case Success(sm) => sm
-    case Failure(exception) => {
-      log.error(s"Unable to load StorageManager with address $smAddress, exception: $exception")
-      sys.exit(1)
-    }
-  }
-  protected def storageProvider: StorageProvider = sp
-  protected var _latestDigest: ADDigest = config.getString("sgrub.do.startingDigest") match {
-    case digest if !digest.isEmpty => ADDigest @@ Hex.decode(digest)
-    case _ => storageProvider.initialDigest
-  }
-//  private var _latestDigest: ADDigest = storageProvider.initialDigest
-  override def latestDigest: ADDigest = _latestDigest
 
-  /**
-   * Runs the ADS protocol with [[storageProvider]]
-   *
-   * @param kvs The key-value pairs to be updated
-   * @return True when the KVs were updated successfully and securely, otherwise returns False
-   */
   override def gPuts(kvs: Map[Long, Array[Byte]]): Boolean = {
     log.info(s"gPuts: ${kvs.map(kv => (kv._1, new String(kv._2)))}")
     val (receivedDigest, receivedProof) = storageProvider.gPuts(kvs)
@@ -70,7 +40,7 @@ class ChainDataOwner(
         _latestDigest = receivedDigest
         log.info(s"Updating digest, new digest: ${Hex.toHexString(receivedDigest)}")
         if (shouldReplicate) {
-          logGasUsage("Update digest and replicate",
+          callbackFunction("Update digest and replicate",
             () => storageManager.update(kvs.keys.map(Longs.toByteArray).toList.asJava, kvs.values.toList.asJava, _latestDigest).send()) match {
             case Success(_) => true
             case Failure(exception) => {
@@ -79,7 +49,7 @@ class ChainDataOwner(
             }
           }
         } else {
-          logGasUsage("Update digest",
+          callbackFunction("Update digest",
             () => storageManager.updateDigestOnly(_latestDigest).send()) match {
             case Success(_) => true
             case Failure(exception) => {
@@ -90,6 +60,23 @@ class ChainDataOwner(
         }
       }
       case _ => false
+    }
+  }
+
+
+  def callbackFunction(functionName: String, function: () => TransactionReceipt): Try[TransactionReceipt] = {
+    val result = Try(function())
+    result match {
+      case Success(receipt) => {
+        val gasUsed = receipt.getGasUsed
+        log.info(s"'$functionName' succeeded, gas used: $gasUsed")
+        callback(gasUsed)
+        result
+      }
+      case Failure(exception) => {
+        log.error(s"'$functionName' failed, unable to measure gas. Exception: $exception")
+        result
+      }
     }
   }
 }

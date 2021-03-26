@@ -3,6 +3,7 @@ package sgrub
 import com.typesafe.scalalogging.Logger
 import sgrub.chain.{ChainDataOwner, ChainDataUser, ChainTools, StorageProviderChainListener}
 import sgrub.console.BatchReader
+import sgrub.experiments.ExperimentBatches
 import sgrub.inmemory.InMemoryStorageProvider
 import sgrub.playground.ScryptoInMemoryThings
 
@@ -20,7 +21,8 @@ object SgrubStart {
       "\n1: Deploy Smart Contracts" +
       "\n2: Start DataOwner and StorageProvider" +
       "\n3: Start DataUser" +
-      "\n4: Demo: In-memory ADS")
+      "\n4: Demo: In-memory ADS" +
+      "\n5: Experiment: X Bytes of Y Batches")
     StdIn.readInt() match {
       case 1 => ChainTools.deployContracts()
       case 2 => {
@@ -51,8 +53,12 @@ object SgrubStart {
         })
       }
       case 4 => ScryptoInMemoryThings.tryInMemoryGrub()
+      case 5 => {
+        val experiment = new ExperimentBatches(1, 2)
+        experiment.startExperiment()
+      }
       case _ => {
-        log.error("Enter a number between 1-4")
+        log.error("Enter a number between 1-5")
         sys.exit(1)
       }
     }
