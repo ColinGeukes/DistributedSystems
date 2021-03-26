@@ -54,8 +54,12 @@ object SgrubStart {
       }
       case 4 => ScryptoInMemoryThings.tryInMemoryGrub()
       case 5 => {
-        val experiment = new ExperimentBatches(1, 2)
-        experiment.startExperiment()
+        print("[1, X] bytes\nX: ")
+        val xBytes = StdIn.readInt()
+        print("[1, Y] batches\nY: ")
+        val yBatches = StdIn.readInt()
+        new ExperimentBatches(xBytes, yBatches, false).startExperiment()
+        new ExperimentBatches(xBytes, yBatches, true).startExperiment()
       }
       case _ => {
         log.error("Enter a number between 1-5")

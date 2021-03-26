@@ -6,7 +6,7 @@ import sgrub.inmemory.InMemoryStorageProvider
 import scala.collection.mutable
 import java.io._
 
-class ExperimentBatches(maxBytes: Int, maxBatches: Int, replicate:) {
+class ExperimentBatches(maxBytes: Int, maxBatches: Int, rndDistribute: Boolean) {
   private val log = Logger(getClass.getName)
 
   private var currentBytes = 1
@@ -34,7 +34,7 @@ class ExperimentBatches(maxBytes: Int, maxBatches: Int, replicate:) {
       running = false
 
       // Write results to file.
-      val pw = new PrintWriter(new File("experiments/hello.txt" ))
+      val pw = new PrintWriter(new File(s"experiments/experiment5-$rndDistribute.csv" ))
       results.foreach((element: ExperimentResult) => {
         element.write(pw)
       })
@@ -54,53 +54,44 @@ class ExperimentBatches(maxBytes: Int, maxBatches: Int, replicate:) {
   }
 
   private def startExperiment(bytes: Int, batches: Int): Unit = {
-    log.info(s"Experiment $currentBytes bytes evenly distributed over $currentBatches batches.")
+    log.info(s"Experiment $currentBytes bytes ${if (rndDistribute) "random" else "evenly"} distributed over $currentBatches batches.")
 
     // Inner experiment loop.
     DO.gPuts(createBatch(currentBytes, currentBatches))
   }
 
-//  def batchExperiment(): Unit = {
-//    log.info("Start batch experiment X bytes evenly distributed over Y batches")
-//    val maxBytes = 5
-//    val maxBatches = 5
-//
-////    def callback(gasUsed: BigInt): Unit = {
-////      log.info(s"The inner callback log!! $gasUsed")
-////    }
-//
-////    val SP = new InMemoryStorageProvider
-////    val DO = new ChainDataOwnerExperiment(SP, callback, true)
-//
-//
-////    val listener = new StorageProviderExperimentListener(SP).listen()
-////
-////
-////    // Outer experiment loop.
-////    for(currentBytes <- 1 to maxBytes){
-////      for(currentBatches <- 1 to maxBatches){
-////
-////        log.info(s"Experiment $currentBytes bytes evenly distributed over $currentBatches batches.")
-////
-////        // Inner experiment loop.
-////        DO.gPuts(createBatch(currentBytes, currentBatches))
-////
-////        // Wait for extra input
-////        StdIn.readBoolean()
-////      }
-////    }
-////
-////    listener.dispose()
-//  }
-
   def createBatch(bytes: Int, batches: Int): Map[Long, Array[Byte]] = {
     val result = mutable.Map.empty[Long, Array[Byte]]
 
-    // For each key we insert a batch.
-    for(batch <- 0 until batches){
-      // Fill the key with a random batch array of size bytes. The byte corresponds to a readable char.
-      result(1 + batch) = Array.fill(bytes)((scala.util.Random.nextInt(126-48) + 48).toByte)
+    val rndKey = scala.util.Random.nextLong()
+
+    // The normal distributed experiment.
+    if(!rndDistribute){
+      // For each key we insert a batch.
+      for(batch <- 0 until batches){
+        // Fill the key with a random batch array of size bytes. The byte corresponds to a readable char.
+        result((rndKey + batch) % Long.MaxValue) = Array.fill(bytes)((scala.util.Random.nextInt(126-48) + 48).toByte)
+      }
     }
+
+    // The random distributed experiment.
+    else {
+      var bytesLeft = bytes * batches: Int
+      for(batch <- 0 until batches - 1){
+
+        // Retrieve random size and keep it inbounds.
+        var currentBytes = scala.util.Random.nextInt(bytes * 2)
+        if(currentBytes > bytesLeft){
+          currentBytes = bytesLeft
+        }
+
+        result((rndKey + batch) % Long.MaxValue) = Array.fill(currentBytes)((scala.util.Random.nextInt(126-48) + 48).toByte)
+        bytesLeft -= currentBytes
+      }
+      // Add the remainder to the last key.
+      result((rndKey + batches - 1) % Long.MaxValue) = Array.fill(bytesLeft)((scala.util.Random.nextInt(126-48) + 48).toByte)
+    }
+
 
     // Return the result.
     result.toMap
