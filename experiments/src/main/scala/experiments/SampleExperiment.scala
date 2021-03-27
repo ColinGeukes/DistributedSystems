@@ -1,11 +1,8 @@
 package experiments
 
-import org.web3j.crypto.WalletUtils
 import org.web3j.protocol.core.methods.response.TransactionReceipt
-import org.web3j.tx.RawTransactionManager
-import sgrub.chain.{ChainDataOwner, ChainDataUser, StorageProviderChainListener, gasProvider, web3}
+import sgrub.chain.{ChainDataOwner, ChainDataUser, StorageProviderChainListener}
 import sgrub.inmemory.InMemoryStorageProvider
-import sgrub.smartcontracts.generated.{StorageManager, StorageProviderEventManager}
 
 import scala.util.{Failure, Success, Try}
 
@@ -41,12 +38,9 @@ object SampleExperiment {
 
   def run(): Unit = {
     // Deploy clean contracts
-    val doCredentials = WalletUtils.loadCredentials(config.getString("sgrub.do.password"), config.getString("sgrub.do.keyLocation"))
-    val doTransactionManager = new RawTransactionManager(web3, doCredentials, config.getInt("sgrub.chainId"))
-    val spCredentials = WalletUtils.loadCredentials(config.getString("sgrub.sp.password"), config.getString("sgrub.sp.keyLocation"))
-    val spTransactionManager = new RawTransactionManager(web3, spCredentials, config.getInt("sgrub.chainId"))
-    val sm = StorageManager.deploy(web3, doTransactionManager, gasProvider).send()
-    val sp = StorageProviderEventManager.deploy(web3, spTransactionManager, gasProvider).send()
+    val newContracts = ExperimentTools.deployContracts()
+    val smAddress = newContracts._1
+    val spAddress = newContracts._1
 
     // Create DO, SP and DU
     val SP = new InMemoryStorageProvider
@@ -54,17 +48,17 @@ object SampleExperiment {
       sp = SP,
       shouldReplicate = false,
       logGasUsage = customGasLog,
-      smAddress = sm.getContractAddress)
+      smAddress = smAddress)
     val listener = new StorageProviderChainListener(
       storageProvider = SP,
       logGasUsage = (functionName, function) => veryCustomGasLog("Something else", functionName, function),
-      smAddress = sm.getContractAddress,
-      spAddress = sp.getContractAddress
+      smAddress = smAddress,
+      spAddress = spAddress
     ).listen()
     val DU = new ChainDataUser(
       logGasUsage = customGasLog,
-      smAddress = sm.getContractAddress,
-      spAddress = sp.getContractAddress
+      smAddress = smAddress,
+      spAddress = spAddress
     )
 
     // Add some things
