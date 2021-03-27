@@ -40,7 +40,7 @@ object SampleExperiment {
     }
   }
 
-  def run(): Unit = {
+  def run(onExit: () => Unit): Unit = {
     // Deploy clean contracts
     val doCredentials = WalletUtils.loadCredentials(config.getString("sgrub.do.password"), config.getString("sgrub.do.keyLocation"))
     val doTransactionManager = new RawTransactionManager(web3, doCredentials, config.getInt("sgrub.chainId"))
@@ -80,7 +80,7 @@ object SampleExperiment {
     DU.gGet(1L, (key, value) => {
       println(s"Successfully got key: $key, value: ${new String(value)}")
       listener.dispose()
-      sys.exit(0)
+      onExit()
     })
   }
 }
