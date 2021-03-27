@@ -1,5 +1,6 @@
 name := "GRuB_Scala"
-version := "0.1"
+organization := "org.sgrub"
+version := "0.1-SNAPSHOT"
 description := "GRuB for Scala"
 
 scalaVersion := "2.12.12"

@@ -5,8 +5,8 @@ import com.typesafe.scalalogging.Logger
 import io.reactivex.disposables.Disposable
 import org.web3j.crypto.WalletUtils
 import org.web3j.protocol.core.DefaultBlockParameterName
+import org.web3j.protocol.core.methods.response.TransactionReceipt
 import org.web3j.tx.RawTransactionManager
-import sgrub.chain.ChainTools.logGasUsage
 import sgrub.config
 import sgrub.contracts.StorageProvider
 import sgrub.smartcontracts.generated.StorageManager.RequestEventResponse
@@ -16,6 +16,7 @@ import scala.util.{Failure, Success, Try}
 
 class StorageProviderChainListener(
   storageProvider: StorageProvider,
+  logGasUsage: (String, () => TransactionReceipt) => Try[TransactionReceipt] = ChainTools.logGasUsage,
   smAddress: String = config.getString("sgrub.smContractAddress"),
   spAddress: String = config.getString("sgrub.spContractAddress")
 ) {
@@ -45,6 +46,7 @@ class StorageProviderChainListener(
         val subscription = storageManager.requestEventFlowable(
           DefaultBlockParameterName.LATEST,
           DefaultBlockParameterName.LATEST)
+          .doOnCancel(() => log.info("Request listener has been stopped."))
           .subscribe((event: RequestEventResponse) => {
             log.info(s"Got a request event: key: ${Longs.fromByteArray(event.key)}, sender: ${event.sender}")
             storageProvider.request(Longs.fromByteArray(event.key), proof => {

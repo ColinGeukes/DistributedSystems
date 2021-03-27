@@ -7,10 +7,10 @@ import io.reactivex.functions.Predicate
 import org.bouncycastle.util.encoders.Hex
 import org.web3j.crypto.WalletUtils
 import org.web3j.protocol.core.DefaultBlockParameterName
+import org.web3j.protocol.core.methods.response.TransactionReceipt
 import org.web3j.tx.RawTransactionManager
 import scorex.crypto.authds.avltree.batch.{BatchAVLVerifier, Lookup}
 import scorex.crypto.authds.{ADDigest, ADKey, SerializedAdProof}
-import sgrub.chain.ChainTools.logGasUsage
 import sgrub.config
 import sgrub.contracts._
 import sgrub.smartcontracts.generated.{StorageManager, StorageProviderEventManager}
@@ -19,6 +19,7 @@ import scala.concurrent.duration.SECONDS
 import scala.util.{Failure, Success, Try}
 
 class ChainDataUser(
+  logGasUsage: (String, () => TransactionReceipt) => Try[TransactionReceipt] = ChainTools.logGasUsage,
   smAddress: String = config.getString("sgrub.smContractAddress"),
   spAddress: String = config.getString("sgrub.spContractAddress")
 ) extends DataUser {
@@ -53,6 +54,8 @@ class ChainDataUser(
       .takeUntil(new Predicate[StorageManager.DeliverEventResponse] {
         override def test(t: StorageManager.DeliverEventResponse): Boolean = Longs.fromByteArray(t.key) == key
       })
+      .doOnCancel(() => log.info("SM Deliver listener has been stopped."))
+      .doOnComplete(() => log.info("SM Deliver listener has completed."))
       .subscribe((event: StorageManager.DeliverEventResponse) => {
         callback(key, event.value)
         spSubscription match {
@@ -69,6 +72,8 @@ class ChainDataUser(
         override def test(t: StorageProviderEventManager.DeliverEventResponse): Boolean = verify(key, t.proof.asInstanceOf[SerializedAdProof], callback)
       })
       .timeout(config.getInt("sgrub.du.gGetTimeout"), SECONDS)
+      .doOnCancel(() => log.info("SP Deliver listener has been stopped."))
+      .doOnComplete(() => log.info("SP Deliver listener has completed."))
       .subscribe((_: StorageProviderEventManager.DeliverEventResponse) => {smSubscription match {
         case Some(sub) => sub.dispose()
         case _ =>
