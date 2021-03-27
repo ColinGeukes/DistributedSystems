@@ -54,6 +54,8 @@ class ChainDataUser(
       .takeUntil(new Predicate[StorageManager.DeliverEventResponse] {
         override def test(t: StorageManager.DeliverEventResponse): Boolean = Longs.fromByteArray(t.key) == key
       })
+      .doOnCancel(() => log.info("SM Deliver listener has been stopped."))
+      .doOnComplete(() => log.info("SM Deliver listener has completed."))
       .subscribe((event: StorageManager.DeliverEventResponse) => {
         callback(key, event.value)
         spSubscription match {
@@ -70,6 +72,8 @@ class ChainDataUser(
         override def test(t: StorageProviderEventManager.DeliverEventResponse): Boolean = verify(key, t.proof.asInstanceOf[SerializedAdProof], callback)
       })
       .timeout(config.getInt("sgrub.du.gGetTimeout"), SECONDS)
+      .doOnCancel(() => log.info("SP Deliver listener has been stopped."))
+      .doOnComplete(() => log.info("SP Deliver listener has completed."))
       .subscribe((_: StorageProviderEventManager.DeliverEventResponse) => {smSubscription match {
         case Some(sub) => sub.dispose()
         case _ =>

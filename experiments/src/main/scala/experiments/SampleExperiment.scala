@@ -4,7 +4,6 @@ import org.web3j.crypto.WalletUtils
 import org.web3j.protocol.core.methods.response.TransactionReceipt
 import org.web3j.tx.RawTransactionManager
 import sgrub.chain.{ChainDataOwner, ChainDataUser, StorageProviderChainListener, gasProvider, web3}
-import sgrub.config
 import sgrub.inmemory.InMemoryStorageProvider
 import sgrub.smartcontracts.generated.{StorageManager, StorageProviderEventManager}
 
@@ -40,7 +39,7 @@ object SampleExperiment {
     }
   }
 
-  def run(onExit: () => Unit): Unit = {
+  def run(): Unit = {
     // Deploy clean contracts
     val doCredentials = WalletUtils.loadCredentials(config.getString("sgrub.do.password"), config.getString("sgrub.do.keyLocation"))
     val doTransactionManager = new RawTransactionManager(web3, doCredentials, config.getInt("sgrub.chainId"))
@@ -80,7 +79,6 @@ object SampleExperiment {
     DU.gGet(1L, (key, value) => {
       println(s"Successfully got key: $key, value: ${new String(value)}")
       listener.dispose()
-      onExit()
     })
   }
 }
