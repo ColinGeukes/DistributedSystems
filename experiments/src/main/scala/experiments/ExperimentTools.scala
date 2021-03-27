@@ -2,9 +2,12 @@ package experiments
 
 import com.typesafe.scalalogging.Logger
 import org.web3j.crypto.WalletUtils
+import org.web3j.protocol.core.methods.response.TransactionReceipt
 import org.web3j.tx.RawTransactionManager
 import sgrub.chain.{gasProvider, web3}
 import sgrub.smartcontracts.generated.{StorageManager, StorageProviderEventManager}
+
+import scala.util.{Failure, Success, Try}
 object ExperimentTools {
   private val log = Logger(getClass.getName)
 
@@ -19,5 +22,22 @@ object ExperimentTools {
 
     log.info(s"Contracts deployed sm=${sm.getContractAddress} sp=${sp.getContractAddress}")
     (sm.getContractAddress, sp.getContractAddress)
+  }
+
+  def createGasLogCallback(callback: BigInt => Unit) = (functionName: String, function: () => TransactionReceipt) => {
+    val result = Try(function())
+    result match {
+      case Success(receipt) => {
+        val gasCost = receipt.getGasUsed
+        log.info(s"'deliverCallBack' succeeded, gas used: $gasCost")
+        callback(gasCost)
+        result
+      }
+      case Failure(exception) => {
+        System.err.println(s"'$functionName' failed, unable to measure gas. Exception: $exception")
+        callback(-1)
+        result
+      }
+    }
   }
 }
