@@ -7,10 +7,10 @@ import io.reactivex.functions.Predicate
 import org.bouncycastle.util.encoders.Hex
 import org.web3j.crypto.WalletUtils
 import org.web3j.protocol.core.DefaultBlockParameterName
+import org.web3j.protocol.core.methods.response.TransactionReceipt
 import org.web3j.tx.RawTransactionManager
 import scorex.crypto.authds.avltree.batch.{BatchAVLVerifier, Lookup}
 import scorex.crypto.authds.{ADDigest, ADKey, SerializedAdProof}
-import sgrub.chain.ChainTools.logGasUsage
 import sgrub.config
 import sgrub.contracts._
 import sgrub.smartcontracts.generated.{StorageManager, StorageProviderEventManager}
@@ -19,6 +19,7 @@ import scala.concurrent.duration.SECONDS
 import scala.util.{Failure, Success, Try}
 
 class ChainDataUser(
+  logGasUsage: (String, () => TransactionReceipt) => Try[TransactionReceipt] = ChainTools.logGasUsage,
   smAddress: String = config.getString("sgrub.smContractAddress"),
   spAddress: String = config.getString("sgrub.spContractAddress")
 ) extends DataUser {

@@ -11,8 +11,8 @@ target
 
 #general
 *.class
-/.ivy2/
-/.sbt/
+**/.ivy2/
+**/.sbt/
 *.bash_history
 
 # other

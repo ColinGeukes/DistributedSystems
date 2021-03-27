@@ -7,12 +7,12 @@ import com.typesafe.scalalogging.Logger
 import org.bouncycastle.util.encoders.Hex
 import org.web3j.crypto.WalletUtils
 import org.web3j.protocol.Web3j
+import org.web3j.protocol.core.methods.response.TransactionReceipt
 import org.web3j.protocol.http.HttpService
 import org.web3j.tx.RawTransactionManager
 import org.web3j.tx.gas.StaticGasProvider
 import scorex.crypto.authds.{ADDigest, ADKey, ADValue, EmptyByteArray}
 import scorex.crypto.authds.avltree.batch.{BatchAVLVerifier, InsertOrUpdate}
-import sgrub.chain.ChainTools.logGasUsage
 import sgrub.config
 import sgrub.contracts.{DataOwner, DigestType, HashFunction, KeyLength, StorageProvider, hf}
 import sgrub.smartcontracts.generated.StorageManager
@@ -23,6 +23,7 @@ import scala.util.{Failure, Success, Try}
 class ChainDataOwner(
   sp: StorageProvider,
   shouldReplicate: Boolean = false,
+  logGasUsage: (String, () => TransactionReceipt) => Try[TransactionReceipt] = ChainTools.logGasUsage,
   smAddress: String = config.getString("sgrub.smContractAddress"),
 ) extends DataOwner {
   private val log = Logger(getClass.getName)
