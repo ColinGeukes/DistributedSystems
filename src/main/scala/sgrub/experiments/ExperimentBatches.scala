@@ -22,6 +22,7 @@ class ExperimentBatches(maxBytes: Int, byteStepSize: Int, maxBatches: Int, batch
   // Looping
   private var currentBytes = 1
   private var currentBatches = 1
+  private var currentKey = 1L
   private var running = true
 
   // Results
@@ -29,7 +30,7 @@ class ExperimentBatches(maxBytes: Int, byteStepSize: Int, maxBatches: Int, batch
 
   private def callback(gasUsed: BigInt): Unit = {
     // Store the results.
-    results = results :+ new ExperimentResult(currentBytes, currentBatches, gasUsed)
+    results = results :+ new ExperimentResult(currentBytes * byteStepSize, currentBatches * batchStepSize, gasUsed)
 
     // We continue with the next experiment.
     currentBatches += 1
@@ -64,23 +65,25 @@ class ExperimentBatches(maxBytes: Int, byteStepSize: Int, maxBatches: Int, batch
   }
 
   private def startExperiment(bytes: Int, batches: Int): Unit = {
-    log.info(s"Experiment $currentBytes bytes ${if (rndDistribute) "random" else "evenly"} distributed over $currentBatches batches.")
+    val bytesTot = currentBytes * byteStepSize
+    val batchesTot = currentBatches * batchStepSize
+
+    log.info(s"Experiment $bytesTot bytes ${if (rndDistribute) "random" else "evenly"} distributed over $batchesTot batches.")
 
     // Inner experiment loop.
-    DO.gPuts(createBatch(currentBytes * byteStepSize, currentBatches * batchStepSize))
+    DO.gPuts(createBatch(bytesTot, batchesTot))
   }
 
   def createBatch(bytes: Int, batches: Int): Map[Long, Array[Byte]] = {
     val result = mutable.Map.empty[Long, Array[Byte]]
-
-    val rndKey = scala.util.Random.nextLong()
 
     // The normal distributed experiment.
     if(!rndDistribute){
       // For each key we insert a batch.
       for(batch <- 0 until batches){
         // Fill the key with a random batch array of size bytes. The byte corresponds to a readable char.
-        result((rndKey + batch) % Long.MaxValue) = Array.fill(bytes)((scala.util.Random.nextInt(90-56) + 56).toByte)
+        result(currentKey % Long.MaxValue) = Array.fill(bytes)((scala.util.Random.nextInt(90-56) + 56).toByte)
+        currentKey += 1
       }
     }
 
@@ -95,11 +98,13 @@ class ExperimentBatches(maxBytes: Int, byteStepSize: Int, maxBatches: Int, batch
           currentBytes = bytesLeft
         }
 
-        result((rndKey + batch) % Long.MaxValue) = Array.fill(currentBytes)((scala.util.Random.nextInt(90-56) + 56).toByte)
+        result(currentKey % Long.MaxValue) = Array.fill(currentBytes)((scala.util.Random.nextInt(90-56) + 56).toByte)
+        currentKey += 1
         bytesLeft -= currentBytes
       }
       // Add the remainder to the last key.
-      result((rndKey + batches - 1) % Long.MaxValue) = Array.fill(bytesLeft)((scala.util.Random.nextInt(90-56) + 56).toByte)
+      result(currentKey % Long.MaxValue) = Array.fill(bytesLeft)((scala.util.Random.nextInt(90-56) + 56).toByte)
+      currentKey += 1
     }
 
 
