@@ -27,23 +27,6 @@ class ExperimentDeliver(length: Int, stepSize: Int) {
   // The results
   private var results = List() : List[ExperimentResult]
 
-
-//  def customGasLog(functionName: String, function: () => TransactionReceipt): Try[TransactionReceipt] = {
-//    val result = Try(function())
-//    result match {
-//      case Success(receipt) => {
-//        val gasCost = receipt.getGasUsed
-//
-//
-//        result
-//      }
-//      case Failure(exception) => {
-//        println(s"'$functionName' failed, unable to measure gas. Exception: $exception")
-//        result
-//      }
-//    }
-//  }
-
   def deliverCallBack(gasCost: BigInt): Unit ={
 
     // Keep track of the result.
@@ -75,23 +58,6 @@ class ExperimentDeliver(length: Int, stepSize: Int) {
       DU.gGet(currentKey, (_, _) => {})
     }
   }
-
-//  def putGasLog(functionName: String, function: () => TransactionReceipt): Try[TransactionReceipt] = {
-//    val result = Try(function())
-//    result match {
-//      case Success(receipt) => {
-//        // Start up the get requests
-//        DU.gGet(currentKey, (_, _) => {})
-//
-//        result
-//      }
-//      case Failure(exception) => {
-//        println(s"'$functionName' failed, unable to measure gas. Exception: $exception")
-//        result
-//      }
-//    }
-//  }
-
 
   def startExperiment(): Unit = {
     // Initialise storage provider and data owner.
