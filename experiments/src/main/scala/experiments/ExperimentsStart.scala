@@ -15,6 +15,7 @@ object ExperimentsStart {
       "\n1: Experiment: X Bytes of Y Batches (even/random distributed)" +
       "\n2: Experiment: gGet cost with(out) replica" +
       "\n3: Experiment: Deliver cost" +
+      "\n4: Experiment: Static Baselines" +
     "\nOption: ")
     StdIn.readInt() match {
       case 0 => {
@@ -61,6 +62,19 @@ object ExperimentsStart {
 
         println("\nSTART RUNNING DELIVER EXPERIMENT")
         new ExperimentDeliver(length, stepSize).startExperiment()
+      }
+      case 4 => {
+        println("\nStatic Baselines Experiment")
+        print("Writes: ")
+        val writes = StdIn.readInt()
+        print("Reads: ")
+        val reads = StdIn.readInt()
+
+        println("\nSTART STATIC BASELINES DELIVER EXPERIMENT NO REPLICATE")
+        new ExperimentStaticBaselines(reads, writes, false).startExperiment()
+
+        println("\nSTART STATIC BASELINES DELIVER EXPERIMENT WITH REPLICATE")
+        new ExperimentStaticBaselines(reads, writes, true).startExperiment()
       }
       case _ => {
         log.error("Enter a number between 1-5")
