@@ -14,6 +14,8 @@ import scala.concurrent.duration.SECONDS
 import scala.util.{Failure, Success, Try}
 
 class ChainDataUserExperiment(
+  smAddress: String,
+  spAddress: String,
   callback: BigInt => Unit
 ) extends ChainDataUser {
 

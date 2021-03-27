@@ -15,8 +15,8 @@ import scala.util.{Failure, Success, Try}
 class ChainDataOwnerExperiment(
   sp: StorageProvider,
   callback: BigInt => Unit,
-  shouldReplicate: Boolean = false,
-  smAddress: String = config.getString("sgrub.smContractAddress"),
+  smAddress: String,
+  shouldReplicate: Boolean,
 ) extends ChainDataOwner(sp, shouldReplicate, smAddress) {
 
 

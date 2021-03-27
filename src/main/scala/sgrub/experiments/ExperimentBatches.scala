@@ -6,17 +6,25 @@ import sgrub.inmemory.InMemoryStorageProvider
 import scala.collection.mutable
 import java.io._
 
+import sgrub.chain.ChainTools
+
 class ExperimentBatches(maxBytes: Int, maxBatches: Int, rndDistribute: Boolean) {
   private val log = Logger(getClass.getName)
 
+  // Create a new contract.
+  private val newContracts = ChainTools.deployContracts(false)
+  private val smAddress = newContracts._1
+
+  // Objects
+  val SP = new InMemoryStorageProvider
+  val DO = new ChainDataOwnerExperiment(SP, callback, smAddress, true)
+
+  // Looping
   private var currentBytes = 1
   private var currentBatches = 1
-
-  val SP = new InMemoryStorageProvider
-  val DO = new ChainDataOwnerExperiment(SP, callback, true)
-
   private var running = true
 
+  // Results
   private var results = List(): List[ExperimentResult]
 
   private def callback(gasUsed: BigInt): Unit = {

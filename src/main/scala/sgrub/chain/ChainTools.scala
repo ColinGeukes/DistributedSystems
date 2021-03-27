@@ -26,18 +26,24 @@ object ChainTools {
     }
   }
 
-  def deployContracts(): Unit = {
+  def deployContracts(logging: Boolean = true): (String, String) = {
     val doCredentials = WalletUtils.loadCredentials(config.getString("sgrub.do.password"), config.getString("sgrub.do.keyLocation"))
     val doTransactionManager = new RawTransactionManager(web3, doCredentials, config.getInt("sgrub.chainId"))
     val spCredentials = WalletUtils.loadCredentials(config.getString("sgrub.sp.password"), config.getString("sgrub.sp.keyLocation"))
     val spTransactionManager = new RawTransactionManager(web3, spCredentials, config.getInt("sgrub.chainId"))
     log.info("Deploying contracts...")
+    var smAddress = ""
+    var spAddress = ""
+
     Try(StorageManager.deploy(web3, doTransactionManager, gasProvider).send()) match {
       case Success(contract) => {
         val receipt = contract.getTransactionReceipt
         log.info(s"SM Transaction receipt: $receipt")
         receipt.ifPresent(r => log.info(s"SM deploy gas used: ${r.getGasUsed}"))
-        log.info(s"SM Contract address (put this in the config file): ${contract.getContractAddress}")
+        smAddress = contract.getContractAddress
+        if(logging){
+          log.info(s"SM Contract address (put this in the config file): $smAddress")
+        }
         if (!contract.isValid) {
           log.error("SM contract was invalid")
         }
@@ -51,7 +57,10 @@ object ChainTools {
         val receipt = contract.getTransactionReceipt
         log.info(s"SP Transaction receipt: $receipt")
         receipt.ifPresent(r => log.info(s"SP deploy gas used: ${r.getGasUsed}"))
-        log.info(s"SP Contract address (put this in the config file): ${contract.getContractAddress}")
+        spAddress = contract.getContractAddress
+        if(logging){
+          log.info(s"SP Contract address (put this in the config file): $spAddress")
+        }
         if (!contract.isValid) {
           log.error("SP contract was invalid")
         }
@@ -60,5 +69,8 @@ object ChainTools {
         log.error(s"SP contract deployment failed with: $exception")
       }
     }
+
+    // Return the addresses.
+    (smAddress, spAddress)
   }
 }

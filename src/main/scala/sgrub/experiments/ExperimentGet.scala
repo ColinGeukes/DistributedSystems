@@ -2,14 +2,27 @@ package sgrub.experiments
 
 import java.io.{File, PrintWriter}
 
+import sgrub.chain.ChainTools
 import sgrub.inmemory.InMemoryStorageProvider
 
 import scala.collection.mutable
 
 class ExperimentGet(length: Int, stepSize: Int, replicate: Boolean) {
+
+
+  // Create a new contract.
+  private val newContracts = ChainTools.deployContracts(false)
+  private val smAddress = newContracts._1
+  private val spAddress = newContracts._2
+
+  // Objects.
+  private val DU = new ChainDataUserExperiment(smAddress, spAddress, getCallBack)
+
+  // The loop.
   private var running = true
-  private val DU = new ChainDataUserExperiment(getCallBack)
   private var currentLength = 1
+
+  // The results
   private var results = List() : List[ExperimentResult]
 
 
@@ -46,7 +59,7 @@ class ExperimentGet(length: Int, stepSize: Int, replicate: Boolean) {
     val DO = new ChainDataOwnerExperiment(SP, (_: BigInt) => {
       // Call the get.
       DU.gGet(currentLength, (_, _) => {})
-    }, replicate)
+    }, smAddress, replicate)
     DO.gPuts(createBatch(length))
 
     // Keep the code running.
