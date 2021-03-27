@@ -12,15 +12,27 @@ import scala.util.{Failure, Success, Try}
 object ChainTools {
   private val log = Logger(getClass.getName)
 
-  def logGasUsage(functionName: String, function: () => TransactionReceipt): Try[TransactionReceipt] = {
+  def logGasUsage(functionName: String, function: () => TransactionReceipt, callback: BigInt => Unit = (_:BigInt) => {}): Try[TransactionReceipt] = {
     val result = Try(function())
     result match {
       case Success(receipt) => {
-        log.info(s"'$functionName' succeeded, gas used: ${receipt.getGasUsed}")
+        // Succeed, get gas used and log.
+        val gasUsed = receipt.getGasUsed
+        log.info(s"'$functionName' succeeded, gas used: $gasUsed")
+
+        // Call the callback
+        callback(gasUsed)
+
+        // Return result.
         result
       }
       case Failure(exception) => {
         log.error(s"'$functionName' failed, unable to measure gas. Exception: $exception")
+
+        // Error return -1.
+        callback(-1)
+
+        // Return result.
         result
       }
     }

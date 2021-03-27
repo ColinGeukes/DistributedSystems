@@ -44,7 +44,7 @@ class ExperimentBatches(maxBytes: Int, byteStepSize: Int, maxBatches: Int, batch
       running = false
 
       // Write results to file.
-      val pw = new PrintWriter(new File(s"experiments/experiment5-$rndDistribute.csv" ))
+      val pw = new PrintWriter(new File(s"experiments/experiment5-$maxBytes-$byteStepSize-$maxBatches-$batchStepSize-$rndDistribute.csv" ))
       results.foreach((element: ExperimentResult) => {
         element.write(pw)
       })

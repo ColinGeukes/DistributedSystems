@@ -3,7 +3,7 @@ package sgrub
 import com.typesafe.scalalogging.Logger
 import sgrub.chain.{ChainDataOwner, ChainDataUser, ChainTools, StorageProviderChainListener}
 import sgrub.console.BatchReader
-import sgrub.experiments.{ExperimentBatches, ExperimentGet}
+import sgrub.experiments.{ExperimentBatches, ExperimentDeliver, ExperimentGet}
 import sgrub.inmemory.InMemoryStorageProvider
 import sgrub.playground.ScryptoInMemoryThings
 
@@ -23,7 +23,8 @@ object SgrubStart {
       "\n3: Start DataUser" +
       "\n4: Demo: In-memory ADS" +
       "\n5: Experiment: X Bytes of Y Batches (even/random distributed)" +
-      "\n6: Experiment: gGet cost with(out) replica")
+      "\n6: Experiment: gGet cost with(out) replica" +
+      "\n7: Experiment: Deliver cost")
     StdIn.readInt() match {
       case 1 => ChainTools.deployContracts()
       case 2 => {
@@ -72,16 +73,25 @@ object SgrubStart {
         new ExperimentBatches(xBytes, xStepSize, yBatches, yStepSize, true).startExperiment()
       }
       case 6 => {
-        print("Sizes: ")
-        val sizes = StdIn.readInt()
+        print("Length: ")
+        val length = StdIn.readInt()
         print("StepSize: ")
         val stepSize = StdIn.readInt()
 
         println("\nSTART RUNNING WITHOUT REPLICATE")
-        new ExperimentGet(sizes, stepSize, false).startExperiment()
+        new ExperimentGet(length, stepSize, false).startExperiment()
 
         println("\nSTART RUNNING WITH REPLICATE")
-        new ExperimentGet(sizes, stepSize, true).startExperiment()
+        new ExperimentGet(length, stepSize, true).startExperiment()
+      }
+      case 7 => {
+        print("Length: ")
+        val length = StdIn.readInt()
+        print("StepSize: ")
+        val stepSize = StdIn.readInt()
+
+        println("\nSTART RUNNING DELIVER EXPERIMENT")
+        new ExperimentDeliver(length, stepSize).startExperiment()
       }
       case _ => {
         log.error("Enter a number between 1-5")

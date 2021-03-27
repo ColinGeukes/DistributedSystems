@@ -17,7 +17,8 @@ import scala.util.{Failure, Success, Try}
 class StorageProviderChainListener(
   storageProvider: StorageProvider,
   smAddress: String = config.getString("sgrub.smContractAddress"),
-  spAddress: String = config.getString("sgrub.spContractAddress")
+  spAddress: String = config.getString("sgrub.spContractAddress"),
+  logCallback: BigInt => Unit = (_:BigInt) => {}
 ) {
   private val log = Logger(getClass.getName)
   private val credentials = WalletUtils.loadCredentials(config.getString("sgrub.sp.password"), config.getString("sgrub.sp.keyLocation"))
@@ -48,7 +49,7 @@ class StorageProviderChainListener(
           .subscribe((event: RequestEventResponse) => {
             log.info(s"Got a request event: key: ${Longs.fromByteArray(event.key)}, sender: ${event.sender}")
             storageProvider.request(Longs.fromByteArray(event.key), proof => {
-              logGasUsage("SP Emit Deliver", () => eventManager.emitDeliver(event.key, proof).send())
+              logGasUsage("SP Emit Deliver", () => eventManager.emitDeliver(event.key, proof).send(), logCallback)
             })
           })
         smSubscription = Some(subscription)
