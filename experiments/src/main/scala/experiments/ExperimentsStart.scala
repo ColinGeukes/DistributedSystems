@@ -18,6 +18,7 @@ object ExperimentsStart {
     "\nOption: ")
     StdIn.readInt() match {
       case 0 => {
+        println("\nSample Experiment")
         SampleExperiment.run()
       }
       case 1 => {
