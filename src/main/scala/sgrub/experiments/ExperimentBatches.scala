@@ -8,7 +8,7 @@ import java.io._
 
 import sgrub.chain.ChainTools
 
-class ExperimentBatches(maxBytes: Int, maxBatches: Int, rndDistribute: Boolean) {
+class ExperimentBatches(maxBytes: Int, byteStepSize: Int, maxBatches: Int, batchStepSize: Int, rndDistribute: Boolean) {
   private val log = Logger(getClass.getName)
 
   // Create a new contract.
@@ -67,7 +67,7 @@ class ExperimentBatches(maxBytes: Int, maxBatches: Int, rndDistribute: Boolean) 
     log.info(s"Experiment $currentBytes bytes ${if (rndDistribute) "random" else "evenly"} distributed over $currentBatches batches.")
 
     // Inner experiment loop.
-    DO.gPuts(createBatch(currentBytes, currentBatches))
+    DO.gPuts(createBatch(currentBytes * byteStepSize, currentBatches * batchStepSize))
   }
 
   def createBatch(bytes: Int, batches: Int): Map[Long, Array[Byte]] = {

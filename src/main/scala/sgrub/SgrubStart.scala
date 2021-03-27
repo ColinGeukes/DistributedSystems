@@ -57,14 +57,19 @@ object SgrubStart {
       case 5 => {
         print("[1, X] bytes\nX: ")
         val xBytes = StdIn.readInt()
+        print("StepSize: ")
+        val xStepSize = StdIn.readInt()
+
         print("[1, Y] batches\nY: ")
         val yBatches = StdIn.readInt()
+        print("StepSize: ")
+        val yStepSize = StdIn.readInt()
 
         println("\nSTART RUNNING WITH EVEN DISTRIBUTED BYTE ARRAYS")
-        new ExperimentBatches(xBytes, yBatches, false).startExperiment()
+        new ExperimentBatches(xBytes, xStepSize, yBatches, yStepSize, false).startExperiment()
 
         println("\nSTART RUNNING WITH EVEN RANDOM BYTE ARRAYS")
-        new ExperimentBatches(xBytes, yBatches, true).startExperiment()
+        new ExperimentBatches(xBytes, xStepSize, yBatches, yStepSize, true).startExperiment()
       }
       case 6 => {
         print("Sizes: ")
