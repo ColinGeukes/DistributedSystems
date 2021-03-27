@@ -43,7 +43,7 @@ class ExperimentDeliver(length: Int, stepSize: Int) {
       results.foreach((element: ExperimentResult) => {
         element.write(pw)
       })
-      pw.close
+      pw.close()
 
       // Dispose the listener.
       log.info("Dispose the listener")
