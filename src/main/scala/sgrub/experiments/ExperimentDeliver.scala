@@ -3,6 +3,7 @@ package sgrub.experiments
 import java.io.{File, PrintWriter}
 
 import com.typesafe.scalalogging.Logger
+import io.reactivex.disposables.Disposable
 import sgrub.chain.{ChainDataOwner, ChainDataUser, ChainTools, StorageProviderChainListener}
 import sgrub.console.BatchReader
 import sgrub.inmemory.InMemoryStorageProvider
@@ -20,6 +21,7 @@ class ExperimentDeliver(length: Int, stepSize: Int) {
 
   // Objects.
   private val DU = new ChainDataUser(smAddress, spAddress)
+  private var listener = null: Disposable
 
   // The loop.
   private var running = true
@@ -38,15 +40,19 @@ class ExperimentDeliver(length: Int, stepSize: Int) {
     // The loop is finished.
     if(currentKey > length){
 
-      // Stop the loop
-      running = false
-
       // Store the results.
       val pw = new PrintWriter(new File(s"experiments/experiment7-$length-$stepSize.csv" ))
       results.foreach((element: ExperimentResult) => {
         element.write(pw)
       })
       pw.close
+
+      // Dispose the listener.
+      log.info("Dispose the listener")
+      listener.dispose()
+
+      // Stop the loop
+      running = false
     }
 
     // Continue the loop by getting next value.
@@ -64,7 +70,7 @@ class ExperimentDeliver(length: Int, stepSize: Int) {
     }, smAddress, false)
 
     // Create the listener and listen to delivers.
-    val listener = new StorageProviderChainListener(SP, smAddress, spAddress, deliverCallBack).listen()
+    listener = new StorageProviderChainListener(SP, smAddress, spAddress, deliverCallBack).listen()
 
     // Put incremental length batch inside the contract.
     DO.gPuts(BatchCreator.createBatchIncremental(length, stepSize))
@@ -73,8 +79,7 @@ class ExperimentDeliver(length: Int, stepSize: Int) {
     // Keep the code running.
     while(running){}
 
-    // Dispose the listener.
-    listener.dispose()
+
   }
 
   class ExperimentResult(length: Int, gasCost: BigInt){
