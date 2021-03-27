@@ -47,6 +47,7 @@ class StorageProviderChainListener(
           DefaultBlockParameterName.LATEST,
           DefaultBlockParameterName.LATEST)
           .doOnCancel(() => log.info("Request listener has been stopped."))
+          .doOnError(ex => log.error(s"Request listener had an error: $ex"))
           .subscribe((event: RequestEventResponse) => {
             log.info(s"Got a request event: key: ${Longs.fromByteArray(event.key)}, sender: ${event.sender}")
             storageProvider.request(Longs.fromByteArray(event.key), proof => {

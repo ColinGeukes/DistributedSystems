@@ -56,6 +56,7 @@ class ChainDataUser(
       })
       .doOnCancel(() => log.info("SM Deliver listener has been stopped."))
       .doOnComplete(() => log.info("SM Deliver listener has completed."))
+      .doOnError(ex => log.error(s"SM Deliver listener had an error: $ex"))
       .subscribe((event: StorageManager.DeliverEventResponse) => {
         callback(key, event.value)
         spSubscription match {
@@ -74,6 +75,7 @@ class ChainDataUser(
       .timeout(config.getInt("sgrub.du.gGetTimeout"), SECONDS)
       .doOnCancel(() => log.info("SP Deliver listener has been stopped."))
       .doOnComplete(() => log.info("SP Deliver listener has completed."))
+      .doOnError(ex => log.error(s"SP Deliver listener had an error: $ex"))
       .subscribe((_: StorageProviderEventManager.DeliverEventResponse) => {smSubscription match {
         case Some(sub) => sub.dispose()
         case _ =>
