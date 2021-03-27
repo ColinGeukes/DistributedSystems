@@ -9,9 +9,13 @@ import org.web3j.tx.gas.StaticGasProvider
 import sgrub.contracts.DataOwner
 import sgrub.inmemory.{InMemoryDataOwner, InMemoryStorageProvider}
 import sgrub.smartcontracts.generated.Storage
-
 import java.math.BigInteger
 import java.security.InvalidParameterException
+
+import org.web3j.protocol.core.DefaultBlockParameterName
+import sgrub.smartcontracts.generated.Storage.VerifiedOutputEventResponse
+
+import scala.concurrent.duration.SECONDS
 import scala.io.StdIn
 import scala.util.{Failure, Success, Try}
 
@@ -55,12 +59,12 @@ class SmartcontractThings(gethPath: String) {
   def tryCall(tryStorage: Try[Storage]): Unit = {
     tryStorage match {
       case Success(storage) => {
-        println("Number to store?")
-        val toStore = BigInteger.valueOf(StdIn.readInt())
-        println(s"Storing $toStore")
-        storage.store(toStore).send()
-        println("Stored. Retrieving...")
-        println(s"Retrieved: ${storage.retrieve().send()}")
+        //println("Number to store?")
+//        val toStore = BigInteger.valueOf(66) //BigInteger.valueOf(StdIn.readInt())
+//        println(s"Storing $toStore")
+//        storage.store(toStore).send()
+//        println("Stored. Retrieving...")
+//        println(s"Retrieved: ${storage.retrieve().send()}")
         println("Trying verification now...")
         val SP = new InMemoryStorageProvider()
         val DO = new InMemoryDataOwner(SP)
@@ -71,17 +75,27 @@ class SmartcontractThings(gethPath: String) {
           4L -> "Hello".getBytes(),
         ))
         println("Updating digest...")
-        storage.updateDigest(DO.latestDigest.slice(0,32)).send()
+        storage.updateDigest(DO.latestDigest.slice(0,33)).send()
         println("Getting proof for key...")
         SP.request(1L, proof => {
+          storage.verifiedOutputEventFlowable(
+            DefaultBlockParameterName.LATEST,
+            DefaultBlockParameterName.LATEST)
+            .timeout(60, SECONDS)
+            .subscribe((event: VerifiedOutputEventResponse) => {
+              println(s"Result: $event")
+              if (event.valid) {
+                println(s"Valid! Value: ${new String(event.value)}")
+                if (event.value.length <= 8) {
+                  println(s"Also possibly value: ${Longs.fromByteArray(event.value)}")
+                }
+              } else {
+                println("Invalid, but hey, it's a response!")
+              }
+            })
           println("Calling verify...")
-          val result = storage.verify(Longs.toByteArray(1L), proof).send()
-          println(s"Result: $result")
-          if (result.valid) {
-            println(s"Valid! Value: ${new String(result.value)}")
-          } else {
-            println("Invalid")
-          }
+          storage.verify(Longs.toByteArray(1L), proof).send()
+
         })
 
       }
@@ -95,8 +109,8 @@ class SmartcontractThings(gethPath: String) {
         "\n================================" +
         "\nSMART CONTRACT TEST (Basic Storage)" +
         "\n================================")
-    println("Deploy new contract? (y/n)")
-    val deployInput = StdIn.readBoolean()
+    //println("Deploy new contract? (y/n)")
+    val deployInput = true //StdIn.readBoolean()
     if (deployInput) {
       tryCall(deploy_storage())
     } else {
