@@ -15,7 +15,7 @@ class ExperimentStaticBaselines(reads: Int, writes: Int, replicate: Boolean) {
   private val spAddress = newContracts._2
 
   // Objects.
-  private val DU = new ChainDataUser(ExperimentTools.createGasLogCallback(getCallBack), smAddress=smAddress, spAddress=spAddress)
+  private val DU = new ChainDataUser(ExperimentTools.createGasLogCallback(if(!replicate) _ => {} else deliverCallBackNoGas), smAddress=smAddress, spAddress=spAddress)
   private var listener = null: Disposable
 
   // The loop.
@@ -29,12 +29,18 @@ class ExperimentStaticBaselines(reads: Int, writes: Int, replicate: Boolean) {
   private var results = List() : List[ExperimentResult]
 
 
-  def getCallBack(gasCost: BigInt): Unit = {
+  def deliverCallBackNoGas(gasCost: BigInt): Unit = {
+    deliverCallBack(0)
+  }
+
+  def deliverCallBack(gasCost: BigInt): Unit = {
 
     // Next get.
     currentOperations +=1
     currentReads += 1
     totalGasCost += gasCost
+
+    println(s"Done with read $currentReads")
 
     // Keep track of the result.
     results = results :+ new ExperimentResult(currentOperations, currentReads, currentWrites, gasCost, totalGasCost)
@@ -55,34 +61,42 @@ class ExperimentStaticBaselines(reads: Int, writes: Int, replicate: Boolean) {
 
     // We are still running, so perform next get.
     else {
-      DU.gGet(1 + scala.util.Random.nextInt(writes), (_, _) => {})
+      DU.gGet(1, (_, _) => {})
     }
   }
 
 
   def startExperiment(): Unit = {
     val SP = new InMemoryStorageProvider
-    val DO = new ChainDataOwner(SP, replicate, ExperimentTools.createGasLogCallback((gasCost: BigInt) => {
+    var DO: ChainDataOwner = null
+    DO = new ChainDataOwner(SP, replicate, ExperimentTools.createGasLogCallback((gasCost: BigInt) => {
       currentOperations += 1
-      currentWrites += writes
+      currentWrites += 1
       totalGasCost += gasCost
 
       // Save the result of the write.
       results = List(new ExperimentResult(currentOperations, currentReads, currentWrites, gasCost, totalGasCost))
 
-      // Call the get.
-      DU.gGet(1 + scala.util.Random.nextInt(writes), (_, _) => {})
+      // Check if we should keep writing or start getting.
+      if(currentWrites < writes){
+        DO.gPuts(BatchCreator.createSingleEntry(currentWrites + 1, 1))
+      } else {
+        DU.gGet(1 , (_, _) => {})
+      }
     }), smAddress=smAddress)
-    listener = new StorageProviderChainListener(SP, ExperimentTools.createGasLogCallback((gasCost: BigInt) => {
-      println(s"The LISTENER GAS COST!: $gasCost")
-    }), smAddress=smAddress, spAddress=spAddress).listen()
 
-    DO.gPuts(BatchCreator.createBatchEqualBytes(writes, 1))
+    if(!replicate){
+      listener = new StorageProviderChainListener(SP, ExperimentTools.createGasLogCallback(deliverCallBack), smAddress=smAddress, spAddress=spAddress).listen()
+    }
+
+    DO.gPuts(BatchCreator.createSingleEntry(currentWrites + 1, 1))
 
     // Keep the code running.
     while(running){}
 
-    listener.dispose()
+    if(!replicate){
+      listener.dispose()
+    }
   }
 
   private class ExperimentResult(operations: Int, currReads: Int, currWrites: Int, gasUsed: BigInt, gasUsedTotal: BigInt){

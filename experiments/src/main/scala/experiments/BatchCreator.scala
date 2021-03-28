@@ -30,4 +30,10 @@ object BatchCreator {
     // Return the result.
     result.toMap
   }
+
+  def createSingleEntry(key: Long, bytes: Int):  Map[Long, Array[Byte]] = {
+    val result = mutable.Map.empty[Long, Array[Byte]]
+    result(key) = Array.fill(bytes)((scala.util.Random.nextInt(90 - 56) + 56).toByte)
+    result.toMap
+  }
 }

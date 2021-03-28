@@ -70,11 +70,11 @@ object ExperimentsStart {
         print("Reads: ")
         val reads = StdIn.readInt()
 
-        println("\nSTART STATIC BASELINES DELIVER EXPERIMENT NO REPLICATE")
-        new ExperimentStaticBaselines(reads, writes, false).startExperiment()
-
         println("\nSTART STATIC BASELINES DELIVER EXPERIMENT WITH REPLICATE")
         new ExperimentStaticBaselines(reads, writes, true).startExperiment()
+
+        println("\nSTART STATIC BASELINES DELIVER EXPERIMENT NO REPLICATE")
+        new ExperimentStaticBaselines(reads, writes, false).startExperiment()
       }
       case _ => {
         log.error("Enter a number between 1-5")
