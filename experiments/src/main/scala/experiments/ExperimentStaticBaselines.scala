@@ -2,7 +2,8 @@ package experiments
 
 import java.io.{File, PrintWriter}
 
-import sgrub.chain.{ChainDataOwner, ChainDataUser}
+import io.reactivex.disposables.Disposable
+import sgrub.chain.{ChainDataOwner, ChainDataUser, StorageProviderChainListener}
 import sgrub.experiments.BatchCreator
 import sgrub.inmemory.InMemoryStorageProvider
 
@@ -15,6 +16,7 @@ class ExperimentStaticBaselines(reads: Int, writes: Int, replicate: Boolean) {
 
   // Objects.
   private val DU = new ChainDataUser(ExperimentTools.createGasLogCallback(getCallBack), smAddress=smAddress, spAddress=spAddress)
+  private var listener = null: Disposable
 
   // The loop.
   private var running = true
@@ -71,11 +73,16 @@ class ExperimentStaticBaselines(reads: Int, writes: Int, replicate: Boolean) {
       // Call the get.
       DU.gGet(1 + scala.util.Random.nextInt(writes), (_, _) => {})
     }), smAddress=smAddress)
+    listener = new StorageProviderChainListener(SP, ExperimentTools.createGasLogCallback((gasCost: BigInt) => {
+      println(s"The LISTENER GAS COST!: $gasCost")
+    }), smAddress=smAddress, spAddress=spAddress).listen()
 
     DO.gPuts(BatchCreator.createBatchEqualBytes(writes, 1))
 
     // Keep the code running.
     while(running){}
+
+    listener.dispose()
   }
 
   private class ExperimentResult(operations: Int, currReads: Int, currWrites: Int, gasUsed: BigInt, gasUsedTotal: BigInt){
