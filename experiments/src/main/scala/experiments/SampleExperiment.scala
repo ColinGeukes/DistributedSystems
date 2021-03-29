@@ -38,9 +38,7 @@ object SampleExperiment {
 
   def run(): Unit = {
     // Deploy clean contracts
-    val newContracts = ExperimentTools.deployContracts()
-    val smAddress = newContracts._1
-    val spAddress = newContracts._1
+    val (smAddress, spAddress) = ExperimentTools.deployContracts()
 
     // Create DO, SP and DU
     val SP = new InMemoryStorageProvider

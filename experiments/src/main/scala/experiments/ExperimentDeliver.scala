@@ -12,9 +12,7 @@ class ExperimentDeliver(length: Int, stepSize: Int) {
   private val log = Logger(getClass.getName)
 
   // Create a new contract.
-  private val newContracts = ExperimentTools.deployContracts()
-  private val smAddress = newContracts._1
-  private val spAddress = newContracts._2
+  private val (smAddress, spAddress) = ExperimentTools.deployContracts()
 
   // Objects.
   private val DU = new ChainDataUser(smAddress=smAddress, spAddress=spAddress)

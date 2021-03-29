@@ -10,9 +10,7 @@ class ExperimentGet(length: Int, stepSize: Int, replicate: Boolean) {
 
 
   // Create a new contract.
-  private val newContracts = ExperimentTools.deployContracts()
-  private val smAddress = newContracts._1
-  private val spAddress = newContracts._2
+  private val (smAddress, spAddress) = ExperimentTools.deployContracts()
 
   // Objects.
   private val DU = new ChainDataUser(ExperimentTools.createGasLogCallback(getCallBack), smAddress=smAddress, spAddress=spAddress)

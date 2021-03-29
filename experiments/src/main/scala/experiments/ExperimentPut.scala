@@ -12,8 +12,7 @@ class ExperimentPut(maxBytes: Int, byteStepSize: Int, maxBatches: Int, batchStep
   private val log = Logger(getClass.getName)
 
   // Create a new contract.
-  private val newContracts = ExperimentTools.deployContracts()
-  private val smAddress = newContracts._1
+  private val (smAddress, _) = ExperimentTools.deployContracts()
 
   // Objects
   val SP = new InMemoryStorageProvider
