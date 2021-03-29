@@ -24,8 +24,8 @@ The program has four options:
 ```
 
 The first deploys the required smart contracts
-to the blockchain and outputs their addresses to the log
-note their addresses and enter them into `./application.conf`.
+to the blockchain and outputs their addresses to the log.
+Note their addresses and enter them into `./application.conf`.
 
 "2" starts both the DataOwner and StorageProvider. The former lets you enter
 new values into the storage, the latter will actually store these values, and listens
@@ -57,10 +57,9 @@ compile
 assembly
 ```
 
-Since this can take a while, we've included one such .jar at the root level
-of this repository.
+Since this can take a while, we've included one such .jar in this folder.
 
 You can run the .jar with:
 * `scala target/scala-2.12/GRuB_Scala-assembly-0.1.jar -Dconfig.file=application.conf -J-Xms256m -J-Xmx512`
 if you ran assembly yourself
-* `GRuB_Scala-assembly-0.1.jar -Dconfig.file=application.conf -J-Xms256m -J-Xmx512` to run the included .jar
+* `scala GRuB_Scala-assembly-0.1.jar -Dconfig.file=application.conf -J-Xms256m -J-Xmx512` to run the included .jar
