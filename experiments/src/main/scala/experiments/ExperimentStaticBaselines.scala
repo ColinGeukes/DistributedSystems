@@ -44,16 +44,10 @@ class ExperimentStaticBaselines(reads: Int, writes: Int, replicate: Boolean) {
 
     // Keep track of the result.
     results = results :+ new ExperimentResult(currentOperations, currentReads, currentWrites, gasCost, totalGasCost)
+    storeExperiment()
 
     // Check if inbounds.
     if(currentReads >= reads){
-
-      // Store the results.
-      val pw = new PrintWriter(new File(s"results/experiment-baselines-$reads-$writes-$replicate.csv" ))
-      results.foreach((element: ExperimentResult) => {
-        element.write(pw)
-      })
-      pw.close()
 
       // Stop the loop.
       running = false
@@ -65,6 +59,14 @@ class ExperimentStaticBaselines(reads: Int, writes: Int, replicate: Boolean) {
     }
   }
 
+  def storeExperiment(): Unit = {
+    // Store the results.
+    val pw = new PrintWriter(new File(s"results/experiment-baselines-$reads-$writes-$replicate.csv" ))
+    results.foreach((element: ExperimentResult) => {
+      element.write(pw)
+    })
+    pw.close()
+  }
 
   def startExperiment(): Unit = {
     val SP = new InMemoryStorageProvider
@@ -75,7 +77,8 @@ class ExperimentStaticBaselines(reads: Int, writes: Int, replicate: Boolean) {
       totalGasCost += gasCost
 
       // Save the result of the write.
-      results = List(new ExperimentResult(currentOperations, currentReads, currentWrites, gasCost, totalGasCost))
+      results = results :+ new ExperimentResult(currentOperations, currentReads, currentWrites, gasCost, totalGasCost)
+      storeExperiment()
 
       // Check if we should keep writing or start getting.
       if(currentWrites < writes){

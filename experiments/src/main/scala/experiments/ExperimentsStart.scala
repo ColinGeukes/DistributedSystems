@@ -12,10 +12,11 @@ object ExperimentsStart {
 
 
     print("Select one:" +
-      "\n1: Experiment: X Bytes of Y Batches (even/random distributed)" +
-      "\n2: Experiment: gGet cost with(out) replica" +
-      "\n3: Experiment: Deliver cost" +
-      "\n4: Experiment: Static Baselines" +
+      "\n1: Experiment: Write X Bytes " +
+      "\n2: Experiment: Write X Bytes of Y Batches (even/random distributed)" +
+      "\n3: Experiment: gGet cost with(out) replica" +
+      "\n4: Experiment: Deliver cost" +
+      "\n5: Experiment: Static Baselines" +
     "\nOption: ")
     StdIn.readInt() match {
       case 0 => {
@@ -23,6 +24,15 @@ object ExperimentsStart {
         SampleExperiment.run()
       }
       case 1 => {
+        println("\nPut Single Batch Experiment")
+        print("byte length array (separated with ','): ")
+        val byteString = StdIn.readLine()
+        val byteSizes = byteString.split(",\\s*").map(_.toInt)
+        println(s"Array[${byteSizes.mkString(",")}]")
+        new ExperimentPutSingleBatch(byteSizes).startExperiment()
+
+      }
+      case 2 => {
         println("\nPut Experiment")
         print("[1, X] bytes\nX: ")
         val xBytes = StdIn.readInt()
@@ -40,7 +50,7 @@ object ExperimentsStart {
         println("\nSTART RUNNING WITH EVEN RANDOM BYTE ARRAYS")
         new ExperimentPut(xBytes, xStepSize, yBatches, yStepSize, true).startExperiment()
       }
-      case 2 => {
+      case 3 => {
         println("\nGet Experiment")
         print("Length: ")
         val length = StdIn.readInt()
@@ -53,7 +63,7 @@ object ExperimentsStart {
         println("\nSTART RUNNING WITH REPLICATE")
         new ExperimentGet(length, stepSize, true).startExperiment()
       }
-      case 3 => {
+      case 4 => {
         println("\nDeliver Experiment")
         print("Length: ")
         val length = StdIn.readInt()
@@ -63,7 +73,7 @@ object ExperimentsStart {
         println("\nSTART RUNNING DELIVER EXPERIMENT")
         new ExperimentDeliver(length, stepSize).startExperiment()
       }
-      case 4 => {
+      case 5 => {
         println("\nStatic Baselines Experiment")
         print("Writes: ")
         val writes = StdIn.readInt()
@@ -76,6 +86,8 @@ object ExperimentsStart {
         println("\nSTART STATIC BASELINES DELIVER EXPERIMENT NO REPLICATE")
         new ExperimentStaticBaselines(reads, writes, false).startExperiment()
       }
+
+
       case _ => {
         log.error("Enter a number between 1-5")
         sys.exit(1)
