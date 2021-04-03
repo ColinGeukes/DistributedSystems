@@ -15,7 +15,7 @@ ax = fig.add_subplot()
 a = np.arange(len(x_axis_label))
 
 # Add the plots
-ax.plot(a, y)
+ax.plot(a, y, 'b-x')
 
 # Set the x axis
 ax.xaxis.set_ticks(a)

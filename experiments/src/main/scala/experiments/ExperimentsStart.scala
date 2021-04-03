@@ -29,8 +29,13 @@ object ExperimentsStart {
         val byteString = StdIn.readLine()
         val byteSizes = byteString.split(",\\s*").map(_.toInt)
         println(s"Array[${byteSizes.mkString(",")}]")
-        new ExperimentPutSingleBatch(byteSizes).startExperiment()
 
+        println("\nSTART RUNNING WITHOUT REPLICATE")
+        new ExperimentPutSingleBatch(byteSizes, false).startExperiment()
+
+
+        println("\nSTART RUNNING WITH REPLICATE")
+        new ExperimentPutSingleBatch(byteSizes, true).startExperiment()
       }
       case 2 => {
         println("\nPut Experiment")

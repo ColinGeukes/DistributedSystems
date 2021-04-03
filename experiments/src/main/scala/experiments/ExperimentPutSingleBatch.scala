@@ -8,7 +8,7 @@ import sgrub.inmemory.InMemoryStorageProvider
 
 import scala.collection.mutable
 
-class ExperimentPutSingleBatch(bytes: Array[Int]) {
+class ExperimentPutSingleBatch(bytes: Array[Int], replicate: Boolean) {
   private val log = Logger(getClass.getName)
 
   // Create a new contract.
@@ -17,7 +17,7 @@ class ExperimentPutSingleBatch(bytes: Array[Int]) {
 
   // Objects
   val SP = new InMemoryStorageProvider
-  val DO = new ChainDataOwner(SP, true, ExperimentTools.createGasLogCallback(callback), smAddress = smAddress)
+  val DO = new ChainDataOwner(SP, replicate, ExperimentTools.createGasLogCallback(callback), smAddress = smAddress)
 
   // Looping
   private var currentKey = -1L
@@ -51,7 +51,7 @@ class ExperimentPutSingleBatch(bytes: Array[Int]) {
 
   def storeExperiment(): Unit = {
     // Write results to file.
-    val pw = new PrintWriter(new File(s"results/experiment-putsinglebatch-${bytes.mkString("_")}.csv" ))
+    val pw = new PrintWriter(new File(s"results/experiment-putsinglebatch-$replicate-${bytes.mkString("_")}.csv" ))
     results.foreach((element: ExperimentResult) => {
       element.write(pw)
     })
