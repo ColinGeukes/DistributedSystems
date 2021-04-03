@@ -6,7 +6,7 @@ import sgrub.chain.{ChainDataOwner, ChainDataUser}
 import sgrub.experiments.BatchCreator
 import sgrub.inmemory.InMemoryStorageProvider
 
-class ExperimentGet(length: Int, stepSize: Int, replicate: Boolean) {
+class ExperimentGet(sizes: Array[Int], samples: Int, replicate: Boolean) {
 
 
   // Create a new contract.
@@ -18,25 +18,43 @@ class ExperimentGet(length: Int, stepSize: Int, replicate: Boolean) {
   private val DU = new ChainDataUser(ExperimentTools.createGasLogCallback(getCallBack), smAddress=smAddress, spAddress=spAddress)
 
   // The loop.
+  private var firstRun = true
   private var running = true
-  private var currentLength = 1
+  private var currentKey = 1
+  private var currentSize = 0
+
+  // The sample
+  private var currentGasCost = 0 :BigInt
+  private var currentSample = 0
 
   // The results
   private var results = List() : List[ExperimentResult]
 
 
   def getCallBack(gasCost: BigInt): Unit = {
-    // Keep track of the result.
-    results = results :+ new ExperimentResult(currentLength * stepSize, gasCost)
 
-    // Next get.
-    currentLength += 1
+    if(!firstRun){
+
+      currentGasCost += gasCost
+      currentSample += 1
+
+      if(currentSample >= samples){
+        // Keep track of the result.
+        results = results :+ new ExperimentResult(currentSize, sizes(currentSize), currentGasCost / samples)
+
+
+        // Next get.
+        currentKey += 1
+      }
+    } else {
+      firstRun = false
+    }
 
     // Check if inbounds.
-    if(currentLength > length){
+    if(currentSize > sizes.length){
 
       // Store the results.
-      val pw = new PrintWriter(new File(s"results/experiment-get-$length-$stepSize-$replicate.csv" ))
+      val pw = new PrintWriter(new File(s"results/experiment-get-$samples-$replicate-${sizes.mkString("_")}.csv" ))
       results.foreach((element: ExperimentResult) => {
         element.write(pw)
       })
@@ -48,7 +66,7 @@ class ExperimentGet(length: Int, stepSize: Int, replicate: Boolean) {
 
     // We are still running, so perform next get.
     else {
-      DU.gGet(currentLength, (_, _) => {})
+      DU.gGet(currentKey, (_, _) => {})
     }
   }
 
@@ -57,18 +75,18 @@ class ExperimentGet(length: Int, stepSize: Int, replicate: Boolean) {
     val SP = new InMemoryStorageProvider
     val DO = new ChainDataOwner(SP, replicate, ExperimentTools.createGasLogCallback((_: BigInt) => {
       // Call the get.
-      DU.gGet(currentLength, (_, _) => {})
+      DU.gGet(currentKey, (_, _) => {})
     }), smAddress=smAddress)
 
-    DO.gPuts(BatchCreator.createBatchIncremental(length, stepSize))
+    DO.gPuts(BatchCreator.createSizedBatch(sizes))
 
     // Keep the code running.
     while(running){}
   }
 
-  class ExperimentResult(length: Int, gasCost: BigInt){
+  class ExperimentResult(index: Int, size: Int, gasCost: BigInt){
     def write(printWriter: PrintWriter): Unit ={
-      printWriter.write(s"$length;$gasCost\n")
+      printWriter.write(s"$index;$size;$gasCost\n")
     }
   }
 }

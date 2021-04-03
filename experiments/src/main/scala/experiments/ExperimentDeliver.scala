@@ -91,25 +91,13 @@ class ExperimentDeliver(bytes: Array[Int], samples: Int) {
     listener = new StorageProviderChainListener(SP, ExperimentTools.createGasLogCallback(deliverCallBack), smAddress=smAddress, spAddress=spAddress).listen()
 
     // Put incremental length batch inside the contract.
-    DO.gPuts(createBatch())
+    DO.gPuts(BatchCreator.createSizedBatch(bytes))
 
 
     // Keep the code running.
     while(running){}
   }
 
-  def createBatch(): Map[Long, Array[Byte]] = {
-    val result = mutable.Map.empty[Long, Array[Byte]]
-
-    // Insert each key in the batch
-    for(key <- 0 until bytes.length){
-      // Fill the key with a random batch array of size bytes. The byte corresponds to a readable char.
-      result(key + 1) = Array.fill(bytes(key))(56.toByte)
-    }
-
-    // Return the result.
-    result.toMap
-  }
 
   class ExperimentResult(key: Int, bytes: Int, gasCost: BigInt){
     def write(printWriter: PrintWriter): Unit ={

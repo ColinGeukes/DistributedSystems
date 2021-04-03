@@ -36,4 +36,18 @@ object BatchCreator {
     result(key) = Array.fill(bytes)((scala.util.Random.nextInt(90 - 56) + 56).toByte)
     result.toMap
   }
+
+  def createSizedBatch(sizes: Array[Int]): Map[Long, Array[Byte]] = {
+    val result = mutable.Map.empty[Long, Array[Byte]]
+
+    // Insert each key in the batch
+    for(key <- 0 until sizes.length){
+      // Fill the key with a random batch array of size bytes. The byte corresponds to a readable char.
+      result(key + 1) = Array.fill(sizes(key))(56.toByte)
+    }
+
+    // Return the result.
+    result.toMap
+  }
+
 }
