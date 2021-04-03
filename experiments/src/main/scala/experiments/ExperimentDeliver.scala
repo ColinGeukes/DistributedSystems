@@ -8,7 +8,9 @@ import io.reactivex.disposables.Disposable
 import sgrub.chain.{ChainDataOwner, ChainDataUser, StorageProviderChainListener}
 import sgrub.inmemory.InMemoryStorageProvider
 
-class ExperimentDeliver(length: Int, stepSize: Int) {
+import scala.collection.mutable
+
+class ExperimentDeliver(bytes: Array[Int]) {
   private val log = Logger(getClass.getName)
 
   // Create a new contract.
@@ -22,28 +24,33 @@ class ExperimentDeliver(length: Int, stepSize: Int) {
 
   // The loop.
   private var running = true
-  private var currentKey = 1
+  private var firstInput = true
+  private var currentKey = 0
 
   // The results
   private var results = List() : List[ExperimentResult]
 
   def deliverCallBack(gasCost: BigInt): Unit ={
 
-    // Keep track of the result.
-    results = results :+ new ExperimentResult(currentKey * stepSize, gasCost)
 
     // Increment the key.
-    currentKey += 1
+    if(!firstInput){
+      results = results :+ new ExperimentResult(currentKey, bytes(currentKey), gasCost)
+      currentKey += 1
 
-    // The loop is finished.
-    if(currentKey > length){
-
-      // Store the results.
-      val pw = new PrintWriter(new File(s"results/experiment-deliver-$length-$stepSize.csv" ))
+      // Store the experiment per step, if something goes wrong.
+      val pw = new PrintWriter(new File(s"results/experiment-deliver-${bytes.mkString("_")}.csv" ))
       results.foreach((element: ExperimentResult) => {
         element.write(pw)
       })
       pw.close()
+
+    } else {
+      firstInput = false
+    }
+
+    // The loop is finished.
+    if(currentKey >= bytes.length){
 
       // Dispose the listener.
       log.info("Dispose the listener")
@@ -55,31 +62,46 @@ class ExperimentDeliver(length: Int, stepSize: Int) {
 
     // Continue the loop by getting next value.
     else {
-      DU.gGet(currentKey, (_, _) => {})
+      DU.gGet(currentKey + 1, (_, _) => {})
     }
   }
+
+
 
   def startExperiment(): Unit = {
     // Initialise storage provider and data owner.
     val SP = new InMemoryStorageProvider
     val DO = new ChainDataOwner(SP, false, ExperimentTools.createGasLogCallback((_) => {
-      DU.gGet(currentKey, (_, _) => {})
+      DU.gGet(1, (_, _) => {})
     }), smAddress = smAddress)
 
     // Create the listener and listen to delivers.
     listener = new StorageProviderChainListener(SP, ExperimentTools.createGasLogCallback(deliverCallBack), smAddress=smAddress, spAddress=spAddress).listen()
 
     // Put incremental length batch inside the contract.
-    DO.gPuts(BatchCreator.createBatchIncremental(length, stepSize))
+    DO.gPuts(createBatch())
 
 
     // Keep the code running.
     while(running){}
   }
 
-  class ExperimentResult(length: Int, gasCost: BigInt){
+  def createBatch(): Map[Long, Array[Byte]] = {
+    val result = mutable.Map.empty[Long, Array[Byte]]
+
+    // Insert each key in the batch
+    for(key <- 0 until bytes.length){
+      // Fill the key with a random batch array of size bytes. The byte corresponds to a readable char.
+      result(key + 1) = Array.fill(bytes(key))((scala.util.Random.nextInt(90-56) + 56).toByte)
+    }
+
+    // Return the result.
+    result.toMap
+  }
+
+  class ExperimentResult(key: Int, bytes: Int, gasCost: BigInt){
     def write(printWriter: PrintWriter): Unit ={
-      printWriter.write(s"$length;$gasCost\n")
+      printWriter.write(s"$key;$bytes;$gasCost\n")
     }
   }
 }

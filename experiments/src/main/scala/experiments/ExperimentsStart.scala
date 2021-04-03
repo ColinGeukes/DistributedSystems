@@ -25,10 +25,7 @@ object ExperimentsStart {
       }
       case 1 => {
         println("\nPut Single Batch Experiment")
-        print("byte length array (separated with ','): ")
-        val byteString = StdIn.readLine()
-        val byteSizes = byteString.split(",\\s*").map(_.toInt)
-        println(s"Array[${byteSizes.mkString(",")}]")
+        val byteSizes = stdin_int_array()
 
         println("\nSTART RUNNING WITHOUT REPLICATE")
         new ExperimentPutSingleBatch(byteSizes, false).startExperiment()
@@ -70,13 +67,10 @@ object ExperimentsStart {
       }
       case 4 => {
         println("\nDeliver Experiment")
-        print("Length: ")
-        val length = StdIn.readInt()
-        print("StepSize: ")
-        val stepSize = StdIn.readInt()
+        val byteSizes = stdin_int_array()
 
         println("\nSTART RUNNING DELIVER EXPERIMENT")
-        new ExperimentDeliver(length, stepSize).startExperiment()
+        new ExperimentDeliver(byteSizes).startExperiment()
       }
       case 5 => {
         println("\nStatic Baselines Experiment")
@@ -100,5 +94,15 @@ object ExperimentsStart {
     }
 
     sys.exit(0)
+  }
+
+  def stdin_int_array(): Array[Int] = {
+    print("byte length array (separated with ','): ")
+    val byteString = StdIn.readLine()
+    val byteSizes = byteString.split(",\\s*").map(_.toInt)
+    println(s"Array[${byteSizes.mkString(",")}]")
+
+    // return the array
+    byteSizes
   }
 }
