@@ -28,8 +28,8 @@ x_axis_label = [0, '', 0.125, '', 0.5, '', 1, '', 4, '', 16, '', 64, '', 256]
 x_range = range(len(x_axis))
 
 # Extrapolate the results
-bl1 = create_baseline_plot(256, 85688, 40674, 33302, x_axis)
-bl2 = create_baseline_plot(256, 130005, 85055, 0, x_axis)
+bl1 = create_baseline_plot(256, 0, 0, 33302, x_axis)
+bl2 = create_baseline_plot(256, 130005 - 85688, 85055 - 40674, 0, x_axis)
 
 fig = plt.figure(1, figsize=(5, 3.5))
 ax = fig.add_subplot()
@@ -47,5 +47,5 @@ ax.legend()
 # Add labels and show the plot
 plt.xlabel("Read-to-write ratio")
 plt.ylabel("Per-operation cost (x10.000 Gas)")
-plt.savefig("baselines.svg")
+plt.savefig("baselines2.svg")
 plt.show()
