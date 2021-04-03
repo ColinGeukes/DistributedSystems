@@ -29,3 +29,5 @@ Running the experiments will create a new `.csv` file in the `experiments/result
 ## Run plots
 The plots are created with Python. They are located in `experiments/plots`.
 To run, for example, the `plotA.py` it is sufficient to open a terminal with `python plotA.py` to generate the plot.
+
+The plots have the result data already imported in the code and it is not required to run a experiment as the `.csv` is not required beforehand. 
