@@ -29,7 +29,7 @@ object ExperimentTools {
     result match {
       case Success(receipt) => {
         val gasCost = receipt.getGasUsed
-        log.info(s"'deliverCallBack' succeeded, gas used: $gasCost")
+        log.info(s"'$functionName' succeeded, gas used: $gasCost")
         callback(gasCost)
         result
       }

@@ -10,7 +10,7 @@ import sgrub.inmemory.InMemoryStorageProvider
 
 import scala.collection.mutable
 
-class ExperimentDeliver(bytes: Array[Int]) {
+class ExperimentDeliver(bytes: Array[Int], samples: Int) {
   private val log = Logger(getClass.getName)
 
   // Create a new contract.
@@ -27,6 +27,10 @@ class ExperimentDeliver(bytes: Array[Int]) {
   private var firstInput = true
   private var currentKey = 0
 
+  // Sampling.
+  private var currentSampleGasCost = 0: BigInt
+  private var currentSample = 0
+
   // The results
   private var results = List() : List[ExperimentResult]
 
@@ -35,16 +39,24 @@ class ExperimentDeliver(bytes: Array[Int]) {
 
     // Increment the key.
     if(!firstInput){
-      results = results :+ new ExperimentResult(currentKey, bytes(currentKey), gasCost)
-      currentKey += 1
+      currentSampleGasCost += gasCost
+      currentSample += 1
 
-      // Store the experiment per step, if something goes wrong.
-      val pw = new PrintWriter(new File(s"results/experiment-deliver-${bytes.mkString("_")}.csv" ))
-      results.foreach((element: ExperimentResult) => {
-        element.write(pw)
-      })
-      pw.close()
+      if(currentSample >= samples){
+        results = results :+ new ExperimentResult(currentKey, bytes(currentKey), currentSampleGasCost / samples)
+        currentKey += 1
 
+        // Reset sampling.
+        currentSampleGasCost = 0
+        currentSample = 0
+
+        // Store the experiment per step, if something goes wrong.
+        val pw = new PrintWriter(new File(s"results/experiment-deliver-$samples-${bytes.mkString("_")}.csv" ))
+        results.foreach((element: ExperimentResult) => {
+          element.write(pw)
+        })
+        pw.close()
+      }
     } else {
       firstInput = false
     }
@@ -92,7 +104,7 @@ class ExperimentDeliver(bytes: Array[Int]) {
     // Insert each key in the batch
     for(key <- 0 until bytes.length){
       // Fill the key with a random batch array of size bytes. The byte corresponds to a readable char.
-      result(key + 1) = Array.fill(bytes(key))((scala.util.Random.nextInt(90-56) + 56).toByte)
+      result(key + 1) = Array.fill(bytes(key))(56.toByte)
     }
 
     // Return the result.

@@ -70,7 +70,7 @@ object ExperimentsStart {
         val byteSizes = stdin_int_array()
 
         println("\nSTART RUNNING DELIVER EXPERIMENT")
-        new ExperimentDeliver(byteSizes).startExperiment()
+        new ExperimentDeliver(byteSizes, 1).startExperiment()
       }
       case 5 => {
         println("\nStatic Baselines Experiment")
