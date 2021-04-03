@@ -17,6 +17,7 @@ object ExperimentsStart {
       "\n3: Experiment: gGet cost with(out) replica" +
       "\n4: Experiment: Deliver cost" +
       "\n5: Experiment: Static Baselines" +
+      "\n6: Experiment: gGet cost with(out) replica, specific range" +
     "\nOption: ")
     StdIn.readInt() match {
       case 0 => {
@@ -84,10 +85,23 @@ object ExperimentsStart {
         println("\nSTART STATIC BASELINES DELIVER EXPERIMENT NO REPLICATE")
         new ExperimentStaticBaselines(reads, writes, false).startExperiment()
       }
+      case 6 => {
+        println("\nGet Experiment (Specific Range)")
+        val byteSizes = stdin_int_array()
+
+        print("Replicate? (y/n): ")
+        if (StdIn.readBoolean()) {
+          println("\nSTART RUNNING WITH REPLICATE")
+          new ExperimentGetSpecificRange(byteSizes, true).startExperiment()
+        } else {
+          println("\nSTART RUNNING WITHOUT REPLICATE")
+          new ExperimentGetSpecificRange(byteSizes, false).startExperiment()
+        }
+      }
 
 
       case _ => {
-        log.error("Enter a number between 1-5")
+        log.error("Enter a number between 1-6")
         sys.exit(1)
       }
     }
