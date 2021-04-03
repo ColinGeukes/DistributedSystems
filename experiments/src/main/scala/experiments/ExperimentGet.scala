@@ -42,6 +42,12 @@ class ExperimentGet(sizes: Array[Int], samples: Int, replicate: Boolean) {
         // Keep track of the result.
         results = results :+ new ExperimentResult(currentSize, sizes(currentSize), currentGasCost / samples)
 
+        // Store the results after each update
+        val pw = new PrintWriter(new File(s"results/experiment-get-$samples-$replicate-${sizes.mkString("_")}.csv" ))
+        results.foreach((element: ExperimentResult) => {
+          element.write(pw)
+        })
+        pw.close()
 
         // Next get.
         currentKey += 1
@@ -52,13 +58,6 @@ class ExperimentGet(sizes: Array[Int], samples: Int, replicate: Boolean) {
 
     // Check if inbounds.
     if(currentSize > sizes.length){
-
-      // Store the results.
-      val pw = new PrintWriter(new File(s"results/experiment-get-$samples-$replicate-${sizes.mkString("_")}.csv" ))
-      results.foreach((element: ExperimentResult) => {
-        element.write(pw)
-      })
-      pw.close()
 
       // Stop the loop.
       running = false

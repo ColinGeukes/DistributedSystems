@@ -54,16 +54,15 @@ object ExperimentsStart {
       }
       case 3 => {
         println("\nGet Experiment")
-        print("Length: ")
-        val length = StdIn.readInt()
-        print("StepSize: ")
-        val stepSize = StdIn.readInt()
+        val byteSizes = stdin_int_array()
+        print("Samples: ")
+        val samples = StdIn.readInt()
 
         println("\nSTART RUNNING WITHOUT REPLICATE")
-        new ExperimentGet(length, stepSize, false).startExperiment()
+        new ExperimentGet(byteSizes, samples, false).startExperiment()
 
         println("\nSTART RUNNING WITH REPLICATE")
-        new ExperimentGet(length, stepSize, true).startExperiment()
+        new ExperimentGet(byteSizes, samples, true).startExperiment()
       }
       case 4 => {
         println("\nDeliver Experiment")
