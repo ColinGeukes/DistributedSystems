@@ -52,6 +52,8 @@ class ExperimentGet(sizes: Array[Int], samples: Int, replicate: Boolean) {
         // Next get.
         currentKey += 1
         currentSize += 1
+        currentSample = 0
+        currentGasCost = 0
       }
     } else {
       firstRun = false
