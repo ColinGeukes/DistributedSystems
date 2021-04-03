@@ -23,6 +23,8 @@ There are five different tests currently.
 5: Experiment: Static Baselines
 ```
 
+Running the experiments will create a new `.csv` file in the `experiments/results` folder. If the experiment setup is exactly the same as a previous experiment then it will be overwritten.
+
 
 ## Run plots
 The plots are created with Python. They are located in `experiments/plots`.
