@@ -16,31 +16,22 @@ class ExperimentPut(maxBytes: Int, byteStepSize: Int, maxBatches: Int, batchStep
 
   // Objects
   val SP = new InMemoryStorageProvider
-  val DO = new ChainDataOwner(SP, true, ExperimentTools.createGasLogCallback(callback), smAddress = smAddress)
+  val DO = new ChainDataOwner(SP, true, ExperimentTools.createGasLogCallback(log, "ChainDataOwnerLogCallback", callback), smAddress = smAddress)
 
   // Looping
   private var currentBytes = 1
   private var currentBatches = 1
   private var currentKey = 1L
   private var running = true
+  private var firstRun = true
 
   // Results
   private var results = List(): List[ExperimentResult]
 
   private def callback(gasUsed: BigInt): Unit = {
     // Store the results.
-    results = results :+ new ExperimentResult(currentBytes * byteStepSize, currentBatches * batchStepSize, gasUsed)
-
-    // We continue with the next experiment.
-    currentBatches += 1
-    if(currentBatches > maxBatches){
-      currentBatches = 1
-      currentBytes += 1
-    }
-
-    if(currentBytes > maxBytes) {
-      // Stop the loop.
-      running = false
+    if(!firstRun){
+      results = results :+ new ExperimentResult(currentBytes * byteStepSize, currentBatches * batchStepSize, gasUsed)
 
       // Write results to file.
       val pw = new PrintWriter(new File(s"results/experiment-put-$maxBytes-$byteStepSize-$maxBatches-$batchStepSize-$rndDistribute.csv" ))
@@ -48,6 +39,20 @@ class ExperimentPut(maxBytes: Int, byteStepSize: Int, maxBatches: Int, batchStep
         element.write(pw)
       })
       pw.close()
+
+      // We continue with the next experiment.
+      currentBatches += 1
+      if(currentBatches > maxBatches){
+        currentBatches = 1
+        currentBytes += 1
+      }
+    } else {
+      firstRun = false
+    }
+
+    if(currentBytes > maxBytes) {
+      // Stop the loop.
+      running = false
     }
 
     // Continue with the experiments.

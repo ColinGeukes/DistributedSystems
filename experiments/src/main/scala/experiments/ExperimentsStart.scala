@@ -12,17 +12,48 @@ object ExperimentsStart {
 
 
     print("Select one:" +
-      "\n1: Experiment: X Bytes of Y Batches (even/random distributed)" +
-      "\n2: Experiment: gGet cost with(out) replica" +
-      "\n3: Experiment: Deliver cost" +
-      "\n4: Experiment: Static Baselines" +
-    "\nOption: ")
+      "\n1: Experiment: Write X Bytes " +
+      "\n2: Experiment: Write X Keys (with value of 1 Byte) in Y batches" +
+      "\n3: Experiment: Write X Bytes per Y Keys (even/random distributed)" +
+      "\n4: Experiment: gGet cost with(out) replica" +
+      "\n5: Experiment: Deliver cost" +
+      "\n6: Experiment: Static Baselines" +
+      "\n7: Experiment: gGet cost with(out) replica, specific range" +
+      "\nOption: ")
     StdIn.readInt() match {
       case 0 => {
         println("\nSample Experiment")
         SampleExperiment.run()
       }
       case 1 => {
+        println("\nPut Single Batch Experiment")
+        val byteSizes = stdin_int_array()
+
+        println("\nSTART RUNNING WITHOUT REPLICATE")
+        new ExperimentPutSingleBatch(byteSizes, false).startExperiment()
+
+
+        println("\nSTART RUNNING WITH REPLICATE")
+        new ExperimentPutSingleBatch(byteSizes, true).startExperiment()
+      }
+      case 2 => {
+        println("\nPut Single Byte Multiple Keys / Batch Experiment")
+
+        val sizes = stdin_int_array("Sizes (separated with ','): ")
+        val amount = stdin_int_array("Times of size (separated with ','): ")
+
+        if(sizes.length != amount.length){
+          log.error("Arrays should have the same size")
+          sys.exit(2)
+        }
+
+        println("\nSTART RUNNING WITH REPLICATE")
+        new ExperimentPutBatch(sizes, amount, true).startExperiment()
+
+        println("\nSTART RUNNING WITHOUT REPLICATE")
+        new ExperimentPutBatch(sizes, amount, false).startExperiment()
+      }
+      case 3 => {
         println("\nPut Experiment")
         print("[1, X] bytes\nX: ")
         val xBytes = StdIn.readInt()
@@ -40,30 +71,27 @@ object ExperimentsStart {
         println("\nSTART RUNNING WITH EVEN RANDOM BYTE ARRAYS")
         new ExperimentPut(xBytes, xStepSize, yBatches, yStepSize, true).startExperiment()
       }
-      case 2 => {
-        println("\nGet Experiment")
-        print("Length: ")
-        val length = StdIn.readInt()
-        print("StepSize: ")
-        val stepSize = StdIn.readInt()
 
-        println("\nSTART RUNNING WITHOUT REPLICATE")
-        new ExperimentGet(length, stepSize, false).startExperiment()
+      case 4 => {
+        println("\nGet Experiment")
+        val byteSizes = stdin_int_array()
+        print("Samples: ")
+        val samples = StdIn.readInt()
 
         println("\nSTART RUNNING WITH REPLICATE")
-        new ExperimentGet(length, stepSize, true).startExperiment()
+        new ExperimentGet(byteSizes, samples, true).startExperiment()
+
+        println("\nSTART RUNNING WITHOUT REPLICATE")
+        new ExperimentGet(byteSizes, samples, false).startExperiment()
       }
-      case 3 => {
+      case 5 => {
         println("\nDeliver Experiment")
-        print("Length: ")
-        val length = StdIn.readInt()
-        print("StepSize: ")
-        val stepSize = StdIn.readInt()
+        val byteSizes = stdin_int_array()
 
         println("\nSTART RUNNING DELIVER EXPERIMENT")
-        new ExperimentDeliver(length, stepSize).startExperiment()
+        new ExperimentDeliver(byteSizes, 1).startExperiment()
       }
-      case 4 => {
+      case 6 => {
         println("\nStatic Baselines Experiment")
         print("Writes: ")
         val writes = StdIn.readInt()
@@ -76,12 +104,35 @@ object ExperimentsStart {
         println("\nSTART STATIC BASELINES DELIVER EXPERIMENT NO REPLICATE")
         new ExperimentStaticBaselines(reads, writes, false).startExperiment()
       }
+      case 7 => {
+        println("\nGet Experiment (Specific Range)")
+        val byteSizes = stdin_int_array()
+
+        print("Replicate? (y/n): ")
+        if (StdIn.readBoolean()) {
+          println("\nSTART RUNNING WITH REPLICATE")
+          new ExperimentGetSpecificRange(byteSizes, true).startExperiment()
+        } else {
+          println("\nSTART RUNNING WITHOUT REPLICATE")
+          new ExperimentGetSpecificRange(byteSizes, false).startExperiment()
+        }
+      }
+
+
       case _ => {
-        log.error("Enter a number between 1-5")
+        log.error("Enter a number between 1-7")
         sys.exit(1)
       }
     }
 
     sys.exit(0)
+  }
+
+  def stdin_int_array(question: String = "byte length array (separated with ','): "): Array[Int] = {
+    print("byte length array (separated with ','): ")
+    val byteString = StdIn.readLine()
+
+    // Create the array from the string.
+    byteString.split(",\\s*").map(_.toInt)
   }
 }
