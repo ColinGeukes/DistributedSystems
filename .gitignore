@@ -26,3 +26,8 @@ target
 
 # geth
 **/geth/
+
+# experiment results/plots
+*.csv
+*.pdf
+*.svg
