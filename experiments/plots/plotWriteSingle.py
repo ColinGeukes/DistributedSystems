@@ -31,10 +31,10 @@ import numpy as np
 
 
 # Create the range.
-x_axis_label = [1, 2, 4, 8, 16, 32, 64, 128, 256]
-x_axis_tick_label = [1, '', '', '', 16, 32, 64, 128, 256]
-y_no_replicate = [number / 10000 for number in [40610, 40610, 40610, 40610, 40610, 40610, 40610, 40610, 40610]]
-y_replicate = [number / 10000 for number in [85055, 85119, 85247, 85503, 86015, 107141, 129393, 173897, 262841]]
+x_axis_label = [1, 2, 4, 8, 16, 32, 48, 64, 96, 128, 192, 256]
+x_axis_tick_label = [1, '', '', '', 16, 32, 48, 64, 96, 128, 192, 256]
+y_no_replicate = [number / 10000 for number in [40674, 40674, 40674, 40674, 40674, 40674, 40674, 40674, 40674, 40674, 40674, 40674]]
+y_replicate = [number / 10000 for number in [84991, 85119, 85247, 85503, 86015, 107141, 128369, 129393, 151645, 173897, 218401, 262841]]
 
 # Create the figure
 fig = plt.figure(1, figsize=(5, 3.5))
@@ -53,5 +53,5 @@ ax.legend()
 # Add labels and show the plot
 plt.xlabel("Bytes written")
 plt.ylabel("Gas cost (x10.000 Gas)")
-plt.savefig("experiment_writebytes.svg")
+plt.savefig("experiment_writebytes.pdf", bbox_inches='tight')
 plt.show()

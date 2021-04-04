@@ -18,6 +18,7 @@ import sgrub.contracts.{DataOwner, DigestType, HashFunction, KeyLength, StorageP
 import sgrub.smartcontracts.generated.StorageManager
 
 import scala.collection.JavaConverters._
+import scala.collection.mutable
 import scala.util.{Failure, Success, Try}
 
 class ChainDataOwner(
@@ -72,7 +73,10 @@ class ChainDataOwner(
         log.info(s"Updating digest, new digest: ${Hex.toHexString(receivedDigest)}")
         if (shouldReplicate) {
           logGasUsage("Update digest and replicate",
-            () => storageManager.update(kvs.keys.map(Longs.toByteArray).toList.asJava, kvs.values.toList.asJava, _latestDigest).send()) match {
+            () => {
+              val kvsOrdered = mutable.LinkedHashMap(kvs.map(kv => (Longs.toByteArray(kv._1), kv._2)).toSeq:_*)
+              storageManager.update(kvsOrdered.keySet.toList.asJava, kvsOrdered.values.toList.asJava, _latestDigest).send()
+            }) match {
             case Success(_) => true
             case Failure(exception) => {
               log.error(s"Update digest and replicate failed: $exception")
