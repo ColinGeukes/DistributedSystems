@@ -53,5 +53,5 @@ ax.legend()
 # Add labels and show the plot
 plt.xlabel("Bytes written")
 plt.ylabel("Gas cost (x10.000 Gas)")
-plt.savefig("experiment_writebytes.svg")
+plt.savefig("experiment_writebytes.pdf", bbox_inches='tight')
 plt.show()

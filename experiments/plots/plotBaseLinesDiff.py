@@ -46,5 +46,5 @@ ax.legend()
 # Add labels and show the plot
 plt.xlabel("Read-to-write ratio")
 plt.ylabel("Per-operation cost (x10.000 Gas)")
-plt.savefig("experiment_baselines2.svg")
+plt.savefig("experiment_baselines2.pdf", bbox_inches='tight')
 plt.show()
