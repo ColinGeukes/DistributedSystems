@@ -38,7 +38,7 @@ y_no_replicate = [number / 10000 for number in [23625, 23625, 23625, 23625, 2362
 y_replicate = [number / 10000 for number in [24584, 24584, 24584, 24584, 24584, 24916, 25445, 25445, 25974, 26503, 27561, 28619]]
 
 # Create the figure
-fig = plt.figure(1, figsize=(5, 3.5))
+fig = plt.figure(1)
 ax = fig.add_subplot()
 a = np.arange(len(x_axis_label))
 
