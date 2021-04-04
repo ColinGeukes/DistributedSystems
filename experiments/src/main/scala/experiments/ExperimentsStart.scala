@@ -13,8 +13,8 @@ object ExperimentsStart {
 
     print("Select one:" +
       "\n1: Experiment: Write X Bytes " +
-      "\n2: Experiment: Write Batches with X Keys of 1 Byte" +
-      "\n3: Experiment: Write X Bytes of Y Batches (even/random distributed)" +
+      "\n2: Experiment: Write X Keys (with value of 1 Byte) in Y batches" +
+      "\n3: Experiment: Write X Bytes per Y Keys (even/random distributed)" +
       "\n4: Experiment: gGet cost with(out) replica" +
       "\n5: Experiment: Deliver cost" +
       "\n6: Experiment: Static Baselines" +
@@ -37,7 +37,7 @@ object ExperimentsStart {
         new ExperimentPutSingleBatch(byteSizes, true).startExperiment()
       }
       case 2 => {
-        println("\nPut Single Byte Multiple Keys Experiment")
+        println("\nPut Single Byte Multiple Keys / Batch Experiment")
 
         val sizes = stdin_int_array("Sizes (separated with ','): ")
         val amount = stdin_int_array("Times of size (separated with ','): ")
