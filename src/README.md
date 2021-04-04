@@ -57,9 +57,7 @@ compile
 assembly
 ```
 
-Since this can take a while, we've included one such .jar in this folder.
-
-You can run the .jar with:
-* `scala target/scala-2.12/GRuB_Scala-assembly-0.1.jar -Dconfig.file=application.conf -J-Xms256m -J-Xmx512`
-if you ran assembly yourself
-* `scala GRuB_Scala-assembly-0.1.jar -Dconfig.file=application.conf -J-Xms256m -J-Xmx512` to run the included .jar
+Then: 
+```
+scala target/scala-2.12/GRuB_Scala-assembly-0.1.jar -Dconfig.file=application.conf -J-Xms256m -J-Xmx512
+```
