@@ -24,17 +24,17 @@ object ExperimentTools {
     (sm.getContractAddress, sp.getContractAddress)
   }
 
-  def createGasLogCallback(callback: BigInt => Unit) = (functionName: String, function: () => TransactionReceipt) => {
+  def createGasLogCallback(name: String, callback: BigInt => Unit) = (functionName: String, function: () => TransactionReceipt) => {
     val result = Try(function())
     result match {
       case Success(receipt) => {
         val gasCost = receipt.getGasUsed
-        log.info(s"'$functionName' succeeded, gas used: $gasCost")
+        log.info(s"'$name' succeeded, gas used: $gasCost")
         callback(gasCost)
         result
       }
       case Failure(exception) => {
-        System.err.println(s"'$functionName' failed, unable to measure gas. Exception: $exception")
+        log.error(s"'$name' failed, unable to measure gas. Exception: $exception")
         callback(-1)
         result
       }

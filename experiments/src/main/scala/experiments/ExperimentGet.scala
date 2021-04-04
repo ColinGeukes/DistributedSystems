@@ -15,7 +15,7 @@ class ExperimentGet(sizes: Array[Int], samples: Int, replicate: Boolean) {
   private val spAddress = newContracts._2
 
   // Objects.
-  private val DU = new ChainDataUser(ExperimentTools.createGasLogCallback(getCallBack), smAddress=smAddress, spAddress=spAddress)
+  private val DU = new ChainDataUser(ExperimentTools.createGasLogCallback("ChainDataUserLogCallback", getCallBack), smAddress=smAddress, spAddress=spAddress)
 
   // The loop.
   private var firstRun = true
@@ -75,7 +75,7 @@ class ExperimentGet(sizes: Array[Int], samples: Int, replicate: Boolean) {
 
   def startExperiment(): Unit = {
     val SP = new InMemoryStorageProvider
-    val DO = new ChainDataOwner(SP, replicate, ExperimentTools.createGasLogCallback((_: BigInt) => {
+    val DO = new ChainDataOwner(SP, replicate, ExperimentTools.createGasLogCallback("ChainDataOwnerLogCallback", (_: BigInt) => {
       // Call the get.
       DU.gGet(currentKey, (_, _) => {})
     }), smAddress=smAddress)

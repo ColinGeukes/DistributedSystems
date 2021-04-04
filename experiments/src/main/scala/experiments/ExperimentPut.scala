@@ -17,7 +17,7 @@ class ExperimentPut(maxBytes: Int, byteStepSize: Int, maxBatches: Int, batchStep
 
   // Objects
   val SP = new InMemoryStorageProvider
-  val DO = new ChainDataOwner(SP, true, ExperimentTools.createGasLogCallback(callback), smAddress = smAddress)
+  val DO = new ChainDataOwner(SP, true, ExperimentTools.createGasLogCallback("ChainDataOwnerLogCallback",callback), smAddress = smAddress)
 
   // Looping
   private var currentBytes = 1

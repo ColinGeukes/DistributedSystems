@@ -83,12 +83,12 @@ class ExperimentDeliver(bytes: Array[Int], samples: Int) {
   def startExperiment(): Unit = {
     // Initialise storage provider and data owner.
     val SP = new InMemoryStorageProvider
-    val DO = new ChainDataOwner(SP, false, ExperimentTools.createGasLogCallback((_) => {
+    val DO = new ChainDataOwner(SP, false, ExperimentTools.createGasLogCallback("DataOwnerLogCallback", _ => {
       DU.gGet(1, (_, _) => {})
     }), smAddress = smAddress)
 
     // Create the listener and listen to delivers.
-    listener = new StorageProviderChainListener(SP, ExperimentTools.createGasLogCallback(deliverCallBack), smAddress=smAddress, spAddress=spAddress).listen()
+    listener = new StorageProviderChainListener(SP, ExperimentTools.createGasLogCallback("StorageProviderChainListenerLogCallback", deliverCallBack), smAddress=smAddress, spAddress=spAddress).listen()
 
     // Put incremental length batch inside the contract.
     DO.gPuts(BatchCreator.createSizedBatch(bytes))

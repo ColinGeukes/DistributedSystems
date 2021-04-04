@@ -17,7 +17,7 @@ class ExperimentPutSingleBatch(bytes: Array[Int], replicate: Boolean) {
 
   // Objects
   val SP = new InMemoryStorageProvider
-  val DO = new ChainDataOwner(SP, replicate, ExperimentTools.createGasLogCallback(callback), smAddress = smAddress)
+  val DO = new ChainDataOwner(SP, replicate, ExperimentTools.createGasLogCallback("ChainDataOwnerLogCallback", callback), smAddress = smAddress)
 
   // Looping
   private var currentKey = -1L
