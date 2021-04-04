@@ -22,7 +22,7 @@ x_axis_tick_labels = [1, '', '', '', 16, 32, 48, 64, 96, 128, 192, 256]
 y_replicate = [number / 10000 for number in [33302, 33430, 36614, 36870, 37254, 38278, 39774, 40798, 43255, 45839, 50879, 56240]]
 
 # Create the figure
-fig = plt.figure(1, figsize=(5, 3.5))
+fig = plt.figure(1, figsize=(5, 4))
 ax = fig.add_subplot()
 a = np.arange(len(x_axis_label))
 
@@ -37,5 +37,5 @@ ax.legend()
 # Add labels and show the plot
 plt.xlabel("Value size (in Bytes)")
 plt.ylabel("Gas cost (x10.000 Gas)")
-plt.savefig("experiment_deliver.svg")
+plt.savefig("experiment_deliver.pdf")
 plt.show()
