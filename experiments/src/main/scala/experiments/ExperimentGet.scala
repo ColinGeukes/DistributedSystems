@@ -2,12 +2,13 @@ package experiments
 
 import java.io.{File, PrintWriter}
 
+import com.typesafe.scalalogging.Logger
 import sgrub.chain.{ChainDataOwner, ChainDataUser}
 import sgrub.experiments.BatchCreator
 import sgrub.inmemory.InMemoryStorageProvider
 
 class ExperimentGet(sizes: Array[Int], samples: Int, replicate: Boolean) {
-
+  private val log = Logger(getClass.getName)
 
   // Create a new contract.
   private val newContracts = ExperimentTools.deployContracts()
@@ -15,7 +16,7 @@ class ExperimentGet(sizes: Array[Int], samples: Int, replicate: Boolean) {
   private val spAddress = newContracts._2
 
   // Objects.
-  private val DU = new ChainDataUser(ExperimentTools.createGasLogCallback("ChainDataUserLogCallback", getCallBack), smAddress=smAddress, spAddress=spAddress)
+  private val DU = new ChainDataUser(ExperimentTools.createGasLogCallback(log, "ChainDataUserLogCallback", getCallBack), smAddress = smAddress, spAddress = spAddress)
 
   // The loop.
   private var firstRun = true
@@ -75,7 +76,7 @@ class ExperimentGet(sizes: Array[Int], samples: Int, replicate: Boolean) {
 
   def startExperiment(): Unit = {
     val SP = new InMemoryStorageProvider
-    val DO = new ChainDataOwner(SP, replicate, ExperimentTools.createGasLogCallback("ChainDataOwnerLogCallback", (_: BigInt) => {
+    val DO = new ChainDataOwner(SP, replicate, ExperimentTools.createGasLogCallback(log, "ChainDataOwnerLogCallback", (_: BigInt) => {
       // Call the get.
       DU.gGet(currentKey, (_, _) => {})
     }), smAddress=smAddress)

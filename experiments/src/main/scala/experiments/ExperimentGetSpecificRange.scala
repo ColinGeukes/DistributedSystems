@@ -5,7 +5,6 @@ import java.io.{File, PrintWriter}
 import com.typesafe.scalalogging.Logger
 import io.reactivex.disposables.Disposable
 import sgrub.chain.{ChainDataOwner, ChainDataUser}
-import sgrub.experiments.BatchCreator
 import sgrub.inmemory.InMemoryStorageProvider
 
 import scala.collection.mutable
@@ -20,7 +19,7 @@ class ExperimentGetSpecificRange(bytes: Array[Int], replicate: Boolean) {
   private val spAddress = newContracts._2
 
   // Objects.
-  private val DU = new ChainDataUser(ExperimentTools.createGasLogCallback("ChainDataUserLogCallback", getCallBack), smAddress=smAddress, spAddress=spAddress)
+  private val DU = new ChainDataUser(ExperimentTools.createGasLogCallback(log, "ChainDataUserLogCallback", getCallBack), smAddress = smAddress, spAddress = spAddress)
   private var listener = null: Disposable
 
   // The loop.
@@ -71,7 +70,7 @@ class ExperimentGetSpecificRange(bytes: Array[Int], replicate: Boolean) {
 
   def startExperiment(): Unit = {
     val SP = new InMemoryStorageProvider
-    val DO = new ChainDataOwner(SP, replicate, ExperimentTools.createGasLogCallback("ChainDataOwnerLogCallback", (_: BigInt) => {
+    val DO = new ChainDataOwner(SP, replicate, ExperimentTools.createGasLogCallback(log, "ChainDataOwnerLogCallback", (_: BigInt) => {
       // Call the get.
       DU.gGet(currentKey, (k, v) => {
         println(s"Got key $k, value ${new String(v)}")

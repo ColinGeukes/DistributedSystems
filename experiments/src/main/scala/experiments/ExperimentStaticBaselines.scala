@@ -2,12 +2,14 @@ package experiments
 
 import java.io.{File, PrintWriter}
 
+import com.typesafe.scalalogging.Logger
 import io.reactivex.disposables.Disposable
 import sgrub.chain.{ChainDataOwner, ChainDataUser, StorageProviderChainListener}
 import sgrub.experiments.BatchCreator
 import sgrub.inmemory.InMemoryStorageProvider
 
 class ExperimentStaticBaselines(reads: Int, writes: Int, replicate: Boolean) {
+  private val log = Logger(getClass.getName)
 
   // Create a new contract.
   private val newContracts = ExperimentTools.deployContracts()
@@ -15,7 +17,7 @@ class ExperimentStaticBaselines(reads: Int, writes: Int, replicate: Boolean) {
   private val spAddress = newContracts._2
 
   // Objects.
-  private val DU = new ChainDataUser(ExperimentTools.createGasLogCallback("ChainDataUserLogCallback", if(!replicate) _ => {} else deliverCallBackNoGas), smAddress=smAddress, spAddress=spAddress)
+  private val DU = new ChainDataUser(ExperimentTools.createGasLogCallback(log, "ChainDataUserLogCallback", if (!replicate) _ => {} else deliverCallBackNoGas), smAddress = smAddress, spAddress = spAddress)
   private var listener = null: Disposable
 
   // The loop.
@@ -71,7 +73,7 @@ class ExperimentStaticBaselines(reads: Int, writes: Int, replicate: Boolean) {
   def startExperiment(): Unit = {
     val SP = new InMemoryStorageProvider
     var DO: ChainDataOwner = null
-    DO = new ChainDataOwner(SP, replicate, ExperimentTools.createGasLogCallback("ChainDataOwnerLogCallback", (gasCost: BigInt) => {
+    DO = new ChainDataOwner(SP, replicate, ExperimentTools.createGasLogCallback(log, "ChainDataOwnerLogCallback", (gasCost: BigInt) => {
       currentOperations += 1
       currentWrites += 1
       totalGasCost += gasCost
@@ -89,7 +91,7 @@ class ExperimentStaticBaselines(reads: Int, writes: Int, replicate: Boolean) {
     }), smAddress=smAddress)
 
     if(!replicate){
-      listener = new StorageProviderChainListener(SP, ExperimentTools.createGasLogCallback("StorageProviderChainListenerLogCallback", deliverCallBack), smAddress=smAddress, spAddress=spAddress).listen()
+      listener = new StorageProviderChainListener(SP, ExperimentTools.createGasLogCallback(log, "StorageProviderChainListenerLogCallback", deliverCallBack), smAddress = smAddress, spAddress = spAddress).listen()
     }
 
     DO.gPuts(BatchCreator.createSingleEntry(currentWrites + 1, 1))

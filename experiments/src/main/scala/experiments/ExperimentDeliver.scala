@@ -8,8 +8,6 @@ import io.reactivex.disposables.Disposable
 import sgrub.chain.{ChainDataOwner, ChainDataUser, StorageProviderChainListener}
 import sgrub.inmemory.InMemoryStorageProvider
 
-import scala.collection.mutable
-
 class ExperimentDeliver(bytes: Array[Int], samples: Int) {
   private val log = Logger(getClass.getName)
 
@@ -83,12 +81,12 @@ class ExperimentDeliver(bytes: Array[Int], samples: Int) {
   def startExperiment(): Unit = {
     // Initialise storage provider and data owner.
     val SP = new InMemoryStorageProvider
-    val DO = new ChainDataOwner(SP, false, ExperimentTools.createGasLogCallback("DataOwnerLogCallback", _ => {
+    val DO = new ChainDataOwner(SP, false, ExperimentTools.createGasLogCallback(log, "DataOwnerLogCallback", _ => {
       DU.gGet(1, (_, _) => {})
     }), smAddress = smAddress)
 
     // Create the listener and listen to delivers.
-    listener = new StorageProviderChainListener(SP, ExperimentTools.createGasLogCallback("StorageProviderChainListenerLogCallback", deliverCallBack), smAddress=smAddress, spAddress=spAddress).listen()
+    listener = new StorageProviderChainListener(SP, ExperimentTools.createGasLogCallback(log, "StorageProviderChainListenerLogCallback", deliverCallBack), smAddress = smAddress, spAddress = spAddress).listen()
 
     // Put incremental length batch inside the contract.
     DO.gPuts(BatchCreator.createSizedBatch(bytes))
