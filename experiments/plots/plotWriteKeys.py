@@ -54,5 +54,5 @@ ax.legend(loc="lower right", bbox_to_anchor=(1,0.1))
 # Add labels and show the plot
 plt.xlabel("Keys (of 1 Byte) written in single batch")
 plt.ylabel("Gas cost (x10.000 Gas)")
-plt.savefig("experiment_write_keys.pdf")
+plt.savefig("experiment_write_keys.pdf", bbox_inches='tight')
 plt.show()
